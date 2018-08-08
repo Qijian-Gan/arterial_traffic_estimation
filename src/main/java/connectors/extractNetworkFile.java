@@ -8,10 +8,14 @@ import main.MainFunction;
  */
 public class extractNetworkFile{
 
-    public static void extractFromAimsun() {
+    /**
+     *
+     * @param AimsunExe: Name of the aimsun exe file
+     */
+    public static void extractFromAimsun(String AimsunExe) {
         // This function is used to extract the network files from Aimsun
         try {
-            String commandLine = "aimsun.exe -script " +
+            String commandLine = AimsunExe+" -script " +
                     MainFunction.cBlock.AimsunFolder + "\\" + MainFunction.cBlock.AimsunNetExtractionScriptName + " " +
                     MainFunction.cBlock.AimsunFolder + "\\" + MainFunction.cBlock.AimsunFileName + " " +
                     MainFunction.cBlock.JunctionYes + " " + MainFunction.cBlock.SectionYes + " " +

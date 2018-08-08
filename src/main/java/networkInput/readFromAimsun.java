@@ -12,6 +12,7 @@ public class readFromAimsun {
 
     public static class AimsunNetwork{
         // This is the profile for Aimsun network
+        // It consists of five components: control plans, junctions, sections, detectors, and master control plans
         public AimsunNetwork(List<AimsunControlPlanJunction> _aimsunControlPlanJunctionList,
                              List<AimsunJunction> _aimsunJunctionList,
                              List<AimsunSection> _aimsunSectionList,
@@ -23,14 +24,23 @@ public class readFromAimsun {
             this.aimsunDetectorList=_aimsunDetectorList;
             this.aimsunMasterControlPlanList=_aimsunMasterControlPlanList;
         }
-        public List<AimsunControlPlanJunction> aimsunControlPlanJunctionList; // Control plan information
-        public List<AimsunJunction> aimsunJunctionList; // Junction information
-        public List<AimsunSection> aimsunSectionList; // Section information
-        public List<AimsunDetector> aimsunDetectorList; // Detector information
-        public List<AimsunMasterControlPlan> aimsunMasterControlPlanList; // Master control plan
+        protected List<AimsunControlPlanJunction> aimsunControlPlanJunctionList; // Control plan information
+        protected List<AimsunJunction> aimsunJunctionList; // Junction information
+        protected List<AimsunSection> aimsunSectionList; // Section information
+        protected List<AimsunDetector> aimsunDetectorList; // Detector information
+        protected List<AimsunMasterControlPlan> aimsunMasterControlPlanList; // Master control plan
+
+        public List<AimsunMasterControlPlan> getAimsunMasterControlPlanList() {
+            return aimsunMasterControlPlanList;
+        }
+
+        public List<AimsunControlPlanJunction> getAimsunControlPlanJunctionList() {
+            return aimsunControlPlanJunctionList;
+        }
     }
 
     //*************************Signal Classes**************************************************
+    // Multiple Layers in Aimsun: Turns "Belong to" Signals "Belong to" Phases "Belong to" Rings "Belong to" A cycle
     public static class AimsunControlPlanJunction{
         // This is the profile of Aimsun control plan-junction
         public AimsunControlPlanJunction(int _PlanID,String _PlanExtID, String _PlanName, int _PlanOffset, int _JunctionID,
@@ -43,7 +53,7 @@ public class readFromAimsun {
             this.PlanOffset=_PlanOffset;
             this.JunctionID=_JunctionID;
             this.JunctionName=_JunctionName;
-            this.ControlType=_ControlType;
+            this.ControlType=_ControlType;//Type: Unspecified, Uncontrolled, FixedControl, External, Actuated
             this.Offset=_Offset;
             this.Cycle=_Cycle;
             this.NumBarriers=_NumBarriers; // Number of barriers
@@ -54,24 +64,64 @@ public class readFromAimsun {
             this.Signals=_Signals; // Signals included
             this.Rings=_Rings; // Rings included
         }
-        public int PlanID;
-        public String PlanExtID;
-        public String PlanName;
-        public int PlanOffset;
-        public int JunctionID;
-        public String JunctionName;
-        public String ControlType;
-        public int Offset;
-        public int Cycle;
-        public int NumBarriers;
-        public int NumRings;
-        public int NumPhases;
-        public int NumSignals;
-        public List<AimsunPhase> Phases; // Phase information
-        public List<AimsunSignal> Signals; // Signal information (in Aimsun): normally associated with traffic movements
-        public List<AimsunRing> Rings; // Ring settings: dual rings or signal ring
+        protected int PlanID;
+        protected String PlanExtID;
+        protected String PlanName;
+        protected int PlanOffset;
+        protected int JunctionID;
+        protected String JunctionName;
+        protected String ControlType;
+        protected int Offset;
+        protected int Cycle;
+        protected int NumBarriers;
+        protected int NumRings;
+        protected int NumPhases;
+        protected int NumSignals;
+        protected List<AimsunPhase> Phases; // Phase information
+        protected List<AimsunSignal> Signals; // Signal information (in Aimsun): normally associated with traffic movements
+        protected List<AimsunRing> Rings; // Ring settings: dual rings or signal ring
         // Master control plans that associated with this control plan
-        public List<AimsunMasterControlPlan> MasterControlPlan =new ArrayList<AimsunMasterControlPlan>();
+        protected List<AimsunMasterControlPlan> MasterControlPlan =new ArrayList<AimsunMasterControlPlan>();
+
+        public int getPlanID() {
+            return PlanID;
+        }
+
+        public int getCycle() {
+            return Cycle;
+        }
+
+        public int getJunctionID() {
+            return JunctionID;
+        }
+
+        public String getControlType() {
+            return ControlType;
+        }
+
+        public List<AimsunSignal> getSignals() {
+            return Signals;
+        }
+
+        public List<AimsunPhase> getPhases() {
+            return Phases;
+        }
+
+        public int getNumSignals() {
+            return NumSignals;
+        }
+
+        public int getPlanOffset() {
+            return PlanOffset;
+        }
+
+        public List<AimsunRing> getRings() {
+            return Rings;
+        }
+
+        public int getNumPhases() {
+            return NumPhases;
+        }
     }
 
     public static class AimsunPhase{
@@ -88,15 +138,35 @@ public class readFromAimsun {
             this.NumSignalInPhase=_NumSignalInPhase;
             this.SignalIDs=_SignalIDs;
         }
-        public int PhaseID;
-        public int RingID;
-        public double StartingTime;
-        public double Duration;
-        public String IsInterphase; // Yellow and all red period in Aimsun
-        public double PermissiveStartTime; // Permissive movement
-        public double PermissiveEndTime;
-        public int NumSignalInPhase;
-        public int [] SignalIDs; // Signals included in the phase
+        protected int PhaseID;
+        protected int RingID;
+        protected double StartingTime;
+        protected double Duration;
+        protected String IsInterphase; // Yellow and all red period in Aimsun
+        protected double PermissiveStartTime; // Permissive movement
+        protected double PermissiveEndTime;
+        protected int NumSignalInPhase;
+        protected int [] SignalIDs; // Signals included in the phase
+
+        public double getDuration() {
+            return Duration;
+        }
+
+        public int getNumSignalInPhase() {
+            return NumSignalInPhase;
+        }
+
+        public int[] getSignalIDs() {
+            return SignalIDs;
+        }
+
+        public int getPhaseID() {
+            return PhaseID;
+        }
+
+        public double getStartingTime() {
+            return StartingTime;
+        }
     }
 
     public static class AimsunSignal{
@@ -106,23 +176,47 @@ public class readFromAimsun {
             this.NumTurnings=_NumTurnings;
             this.TurningIDs=_TurningIDs;
         }
-        public int SignalID;
-        public int NumTurnings;
-        public int [] TurningIDs; // Turn movements included in the signal
+        protected int SignalID;
+        protected int NumTurnings;
+        protected int [] TurningIDs; // Turn movements included in the signal
+
+        public int getNumTurnings() {
+            return NumTurnings;
+        }
+
+        public int[] getTurningIDs() {
+            return TurningIDs;
+        }
+
+        public int getSignalID() {
+            return SignalID;
+        }
     }
 
     public static class AimsunRing{
-        // This is the profile for Aimsun control rings
+        // This is the profile for Aimsun control rings: Coordination settings
         public AimsunRing(int _RingID,int _CoordinatedPhase, double _Offset, int _GetMatchesOffsetWithEndOfPhase){
             this.RingID=_RingID;
             this.CoordinatedPhase=_CoordinatedPhase;
             this.Offset=_Offset;
             this.GetMatchesOffsetWithEndOfPhase=_GetMatchesOffsetWithEndOfPhase;
         }
-        public int RingID;
-        public int CoordinatedPhase; // Which phase is coordinated?
-        public double Offset; // What is the offset?
-        public int GetMatchesOffsetWithEndOfPhase; // The matching point is from the end of the phase or not?
+        protected int RingID;
+        protected int CoordinatedPhase; // Which phase is coordinated?
+        protected double Offset; // What is the offset?
+        protected int GetMatchesOffsetWithEndOfPhase; // The matching point is from the end of the phase or not?
+
+        public int getCoordinatedPhase() {
+            return CoordinatedPhase;
+        }
+
+        public double getOffset() {
+            return Offset;
+        }
+
+        public int getGetMatchesOffsetWithEndOfPhase() {
+            return GetMatchesOffsetWithEndOfPhase;
+        }
     }
 
     public static class AimsunMasterControlPlan{
@@ -136,12 +230,28 @@ public class readFromAimsun {
             this.Duration=_Duration;
             this.Zone=_Zone;
         }
-        public int MasterPlanID;
-        public String Name;
-        public int ControlPlanID; // Control plan ID included in the master control plan
-        public int StartingTime;
-        public int Duration;
-        public int Zone; // The traffic zone (may be related to the "Intersection"?)
+        protected int MasterPlanID;
+        protected String Name;
+        protected int ControlPlanID; // Control plan ID included in the master control plan
+        protected int StartingTime;
+        protected int Duration;
+        protected int Zone; // The traffic zone (may be related to the "Intersection"?)
+
+        public String getName() {
+            return Name;
+        }
+
+        public int getStartingTime() {
+            return StartingTime;
+        }
+
+        public int getDuration() {
+            return Duration;
+        }
+
+        public int getControlPlanID() {
+            return ControlPlanID;
+        }
     }
 
     //*************************Detector Classes**************************************************
@@ -161,16 +271,16 @@ public class readFromAimsun {
             this.FinalPosition=_FinalPosition;
             this.Length=_Length;
         }
-        public int DetectorID;
-        public String ExternalID;
-        public int SectionID;
-        public String Movement;
-        public int NumOfLanes;
-        public int FirstLane; // Labelled from right to left
-        public int LastLane; // Labelled from right to left
-        public double InitialPosition; //The position as an offset from the entrance of the section.
-        public double FinalPosition; //The position as an offset from the entrance of the section.
-        public double Length;
+        protected int DetectorID;
+        protected String ExternalID;
+        protected int SectionID;
+        protected String Movement;
+        protected int NumOfLanes;
+        protected int FirstLane; // Labelled from left to right
+        protected int LastLane; // Labelled from left to right
+        protected double InitialPosition; //The position as an offset from the entrance of the section.
+        protected double FinalPosition; //The position as an offset from the entrance of the section.
+        protected double Length;
     }
 
     //*************************Junction Classes**************************************************
@@ -191,18 +301,22 @@ public class readFromAimsun {
             this.Turnings=_Turnings;
             this.SectionTurningList=_SectionTurningList;
         }
-        public int JunctionID;
-        public String JunctionName;
-        public String JunctionExtID;
-        public int Signalized;
-        public int NumEntranceSections; // Number of entrance sections
-        public int NumExitSections; // Number of exit sections
-        public int NumTurns; // Number of turns
-        public int [] EntranceSections; // Entrance sections
-        public int [] ExitSections; // Exit sections
-        public List<AimsunTurning> Turnings; // Turnings
+        protected int JunctionID;
+        protected String JunctionName;
+        protected String JunctionExtID;
+        protected int Signalized; // whether this junction is signalized or not
+        protected int NumEntranceSections; // Number of entrance sections
+        protected int NumExitSections; // Number of exit sections
+        protected int NumTurns; // Number of turns
+        protected int [] EntranceSections; // Entrance sections
+        protected int [] ExitSections; // Exit sections
+        protected List<AimsunTurning> Turnings; // Turnings
         // Turns included in a section; Turning movements ordered from left to right in a give section
-        public List<AimsunSectionTurning> SectionTurningList;
+        protected List<AimsunSectionTurning> SectionTurningList;
+
+        public List<AimsunTurning> getTurnings() {
+            return Turnings;
+        }
     }
 
     public static class AimsunTurning{
@@ -220,17 +334,40 @@ public class readFromAimsun {
             this.TurningSpeed=_TurningSpeed;
             this.TurningAngle=_TurningAngle;
         }
-        public int TurnID;
-        public int OrigSectionID;
-        public int DestSectionID;
-        public int OrigFromLane; // Labelled from right to left
-        public int OrigToLane; // Labelled from right to left
-        public int DestFromLane; // Labelled from right to left
-        public int DestToLane; // Labelled from right to left
-        public String Movement;
-        public double TurningSpeed;
-        public double TurningAngle;
+        protected int TurnID;
+        protected int OrigSectionID;
+        protected int DestSectionID;
+        protected int OrigFromLane; // Labelled from left to right
+        protected int OrigToLane; // Labelled from left to right
+        protected int DestFromLane; // Labelled from left to right
+        protected int DestToLane; // Labelled from left to right
+        protected String Movement;
+        protected double TurningSpeed;
+        protected double TurningAngle;
 
+        public String getMovement() {
+            return Movement;
+        }
+
+        public double getTurningSpeed() {
+            return TurningSpeed;
+        }
+
+        public int getTurnID() {
+            return TurnID;
+        }
+
+        public int getOrigSectionID() {
+            return OrigSectionID;
+        }
+
+        public int getOrigFromLane() {
+            return OrigFromLane;
+        }
+
+        public int getOrigToLane() {
+            return OrigToLane;
+        }
     }
 
     public static class AimsunSectionTurning{
@@ -240,9 +377,9 @@ public class readFromAimsun {
             this.NumTurns=_NumTurns;
             this.TurnIDFromLeftToRight=_TurnIDFromLeftToRight;
         }
-        public int SectionID;
-        public int NumTurns;
-        public int [] TurnIDFromLeftToRight; //Write the turn orders by section from left to right
+        protected int SectionID;
+        protected int NumTurns;
+        protected int [] TurnIDFromLeftToRight; //Write the turn orders by section from left to right
     }
 
     //*************************Section Classes **************************************************
@@ -260,17 +397,17 @@ public class readFromAimsun {
             this.IsFullLane=_IsFullLane;
             this.ShapePoints=_ShapePoints;
         }
-        public int SectionID;
-        public String SectionName;
-        public String SectionExtID;
-        public int NumLanes; // Number of lanes
-        public int NumPoints; //Number of shape points
-        public double[] LaneLengths; // Lane Lengths
-        public double[] InitialPoints; // Initial starting points
-        public int [] IsFullLane; // Is a full lane or not
-        public double[][] ShapePoints; // Shape points
-        public AimsunJunction DownstreamJunction=null; // This is used to reconstruct the network
-        public AimsunJunction UpstreamJunction=null; // This is used to reconstruct the network
+        protected int SectionID;
+        protected String SectionName;
+        protected String SectionExtID;
+        protected int NumLanes; // Number of lanes
+        protected int NumPoints; //Number of shape points
+        protected double[] LaneLengths; // Lane Lengths
+        protected double[] InitialPoints; // Initial starting points
+        protected int [] IsFullLane; // Is a full lane or not
+        protected double[][] ShapePoints; // Shape points
+        protected AimsunJunction DownstreamJunction=null; // This is used to reconstruct the network
+        protected AimsunJunction UpstreamJunction=null; // This is used to reconstruct the network
     }
 
 
@@ -331,6 +468,11 @@ public class readFromAimsun {
         return aimsunNetwork;
     }
 
+    /**
+     *
+     * @param controlPlanFile File name of control plan
+     * @return List<AimsunControlPlanJunction> class
+     */
     public static List<AimsunControlPlanJunction> readControlPlanInformation(File controlPlanFile){
         // This function is used to read the control plan information
         List<AimsunControlPlanJunction> aimsunControlPlanJunctionList=new ArrayList<AimsunControlPlanJunction>();
@@ -437,7 +579,7 @@ public class readFromAimsun {
                         }
                     }else{
                         tmpAimsunControlPlanJunction=new AimsunControlPlanJunction(PlanID,PlanExtID,
-                                PlanName,PlanOffset,0,null,null,0,0,0,
+                                PlanName,PlanOffset,-1,null,null,0,0,0,
                                 0,0,0,null,null,null);
                     }
                     // Append the control plan-junction to the list
@@ -450,6 +592,11 @@ public class readFromAimsun {
         return aimsunControlPlanJunctionList;
     }
 
+    /**
+     *
+     * @param junctionFile File name of junction information
+     * @return List<AimsunJunction> class
+     */
     public static List<AimsunJunction> readJunctionInformation(File junctionFile){
         // This function is used to read junction information
         List<AimsunJunction> aimsunJunctionList=new ArrayList<AimsunJunction>();
@@ -466,8 +613,7 @@ public class readFromAimsun {
         String line;
         try {
             while ((line = br.readLine()) != null) {
-                if(line.equals("Junction ID,Name, External ID, Signalized,# " +
-                                "of incoming sections,# of outgoing sections, # of turns")){
+                if(line.equals("Junction ID,Name, External ID, Signalized,# of incoming sections,# of outgoing sections, # of turns")){
                     line=br.readLine();// Read the next line
                     String [] tmpLine=line.split(",");
                     int JunctionID=Integer.parseInt(tmpLine[0].trim());
@@ -552,6 +698,11 @@ public class readFromAimsun {
         return aimsunJunctionList;
     }
 
+    /**
+     *
+     * @param sectionFile File name of section information
+     * @return List<AimsunSection> class
+     */
     public static List<AimsunSection> readSectionInformation(File sectionFile) {
         // This is the function to read section information
         List<AimsunSection> aimsunSectionList = new ArrayList<AimsunSection>();
@@ -630,6 +781,11 @@ public class readFromAimsun {
         return aimsunSectionList;
     }
 
+    /**
+     *
+     * @param detectorFile File name of detector information
+     * @return List<AimsunDetector> class
+     */
     public static List<AimsunDetector> readDetectorInformation(File detectorFile) {
         // This is the function to read detector information
 
@@ -669,6 +825,11 @@ public class readFromAimsun {
         return aimsunDetectorList;
     }
 
+    /**
+     *
+     * @param masterControlFile File name of master control information
+     * @return List<AimsunMasterControlPlan> class
+     */
     public static List<AimsunMasterControlPlan> readMasterControlPlanInformation(File masterControlFile){
         // This function is used to read Aimsun master control plan information
         List<AimsunMasterControlPlan> aimsunMasterControlPlanList=new ArrayList<AimsunMasterControlPlan>();

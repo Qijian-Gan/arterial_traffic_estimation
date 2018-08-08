@@ -31,14 +31,31 @@ public class getDetectorData {
             this.FlowOccMid=_FlowOccMid;
             this.Health=_Health;
         }
-        public int DetectorID; // Detector ID
-        public double [][] DataAll=null;  // Time, Flow, Occupancy (All)
-        public CategorizedData categorizedData;
-        public double [][] DataAvgByTime=null; // Time, Flow, Occupancy (Median)
-        public double [][] DataMidByTime=null; // Time, Flow, Occupancy (Average)
-        public double[] FlowOCCAvg=null; // Averaged Flow & Occupancy over all data
-        public double[] FlowOccMid=null; // Median Flow & Occupancy over all data
-        public String Health; // Health index over all data
+        protected int DetectorID; // Detector ID
+        protected double [][] DataAll=null;  // Time, Flow, Occupancy (All)
+        protected CategorizedData categorizedData;
+        protected double [][] DataAvgByTime=null; // Time, Flow, Occupancy (Median)
+        protected double [][] DataMidByTime=null; // Time, Flow, Occupancy (Average)
+        protected double[] FlowOCCAvg=null; // Averaged Flow & Occupancy over all data
+        protected double[] FlowOccMid=null; // Median Flow & Occupancy over all data
+        protected String Health; // Health index over all data
+
+
+        public String getHealth() {
+            return Health;
+        }
+
+        public double[][] getDataAll() {
+            return DataAll;
+        }
+
+        public double[] getFlowOCCAvg() {
+            return FlowOCCAvg;
+        }
+
+        public double[] getFlowOccMid() {
+            return FlowOccMid;
+        }
     }
 
     public static class CategorizedData{
@@ -48,18 +65,25 @@ public class getDetectorData {
             this.CategorizedFlow=_CategorizedFlow;
             this.CategorizedOcc=_CategorizedOcc;
         }
-        public List<Double> Time;
-        public List<List<Double>> CategorizedFlow;
-        public List<List<Double>> CategorizedOcc;
+        protected List<Double> Time;
+        protected List<List<Double>> CategorizedFlow;
+        protected List<List<Double>> CategorizedOcc;
     }
 
+    /**
+     *
+     * @param ps SQL Statement
+     * @param DetectorID Detector ID
+     * @param queryMeasures Query measures
+     * @return SelectedDetectorData
+     */
     public static SelectedDetectorData getDataForGivenDetector(Statement ps, int DetectorID, trafficStateEstimation.QueryMeasures queryMeasures){
         // This is the function to get Processed data for a given detector
 
         // Get the Year, Month, Day settings setting
-        int Year=queryMeasures.Year;
-        int Month=queryMeasures.Month;
-        int Day=queryMeasures.Day;
+        int Year=queryMeasures.getYear();
+        int Month=queryMeasures.getMonth();
+        int Day=queryMeasures.getDay();
         int StartTime=0;
         int EndTime=24*3600;
         if(Year==-1) {
@@ -78,13 +102,13 @@ public class getDetectorData {
             sql=sql+" and Day="+Day;
             sqlHealth=sqlHealth+" and Day="+Day;
         }
-        if(queryMeasures.TimeOfDay!=null){
-            StartTime=queryMeasures.TimeOfDay[0];
-            EndTime=queryMeasures.TimeOfDay[1];
+        if(queryMeasures.getTimeOfDay()!=null){
+            StartTime=queryMeasures.getTimeOfDay()[0];
+            EndTime=queryMeasures.getTimeOfDay()[1];
         }
         sql=sql+" and (Time>="+StartTime+" and Time<"+EndTime+");";
 
-        int DayOfWeek=queryMeasures.DayOfWeek;
+        int DayOfWeek=queryMeasures.getDayOfWeek();
 
         double [][] DataAll=getFlowOccFromSQL(ps,sql,sqlHealth,DayOfWeek);
         String Health;
@@ -94,7 +118,7 @@ public class getDetectorData {
             Health="Bad/NoData";
         }
 
-        CategorizedData categorizedData=getDataCategorizedByTime(DataAll, StartTime, EndTime, queryMeasures.Interval);
+        CategorizedData categorizedData=getDataCategorizedByTime(DataAll, StartTime, EndTime, queryMeasures.getInterval());
         double[][] DataAvgByTime=getDataMidOrAvgByTime(categorizedData,"Average");
         double[][] DataMidByTime=getDataMidOrAvgByTime(categorizedData,"Median");
 
@@ -118,6 +142,12 @@ public class getDetectorData {
 
     }
 
+    /**
+     *
+     * @param categorizedData CategorizedData
+     * @param Type Median or average
+     * @return double [][] Data
+     */
     public static double [][] getDataMidOrAvgByTime(CategorizedData categorizedData, String Type){
         // This function is used to get the median data ordered by time
         double [][] Data=null;
@@ -144,6 +174,14 @@ public class getDetectorData {
         return Data;
     }
 
+    /**
+     *
+     * @param DataAll double [][]
+     * @param StartTime Start time
+     * @param EndTime End time
+     * @param Interval Time interval
+     * @return CategorizedData
+     */
     public static CategorizedData getDataCategorizedByTime(double [][] DataAll, int StartTime,int EndTime, int Interval ){
         // This function is used to get the data categorized by Time
         if(DataAll!=null){
@@ -177,6 +215,14 @@ public class getDetectorData {
         }
     }
 
+    /**
+     *
+     * @param ps SQL statement
+     * @param sql SQL string
+     * @param sqlHealth SQL string for "health"
+     * @param DayOfWeek Day of week
+     * @return double [][] DataAll
+     */
     public static double[][] getFlowOccFromSQL(Statement ps, String sql, String sqlHealth, int DayOfWeek){
         // This function is used to get the Flow and Ooc from the SQL query
         // DayOfWeek: 0:All, 1-7: Sunday to Satursday, 8: Weekday, 9: Weekend
@@ -248,6 +294,14 @@ public class getDetectorData {
         return DataAll;
     }
 
+    /**
+     *
+     * @param HealthIndex List<int[]> health index
+     * @param Year
+     * @param Month
+     * @param Day
+     * @return Health 0/1
+     */
     public static int getHealthIndex(List<int[]> HealthIndex,int Year,int Month,int Day){
         // This function is used to get the health index
         int Health=0;
@@ -261,6 +315,11 @@ public class getDetectorData {
         return Health;
     }
 
+    /**
+     *
+     * @param InputData List<Double> Input Data
+     * @return Median double
+     */
     public static double getMedianFromList(List<Double> InputData){
         // Get the median value
         double Median=-1;
@@ -277,6 +336,11 @@ public class getDetectorData {
         return Median;
     }
 
+    /**
+     *
+     * @param InputData List<Double> Input Data
+     * @return Average double
+     */
     public static double getAverageFromList(List<Double> InputData){
         // Get the average value
         double Average=-1;

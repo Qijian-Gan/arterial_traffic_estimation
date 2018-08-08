@@ -21,7 +21,7 @@ public class loadProgramSettingsFromFile {
             while ((confLine = confFile.readLine()) != null) {// Start to read the file
 
                 confLine = confLine.trim();
-                // ignore blank lines and lines that start with a pound symbol (#)
+                // Ignore blank lines and lines that start with a pound symbol (#)
                 if ((confLine.length() > 0) && (!confLine.trim().startsWith("#", 0))) {
                     String[] tokens = confLine.split("=");
 
@@ -63,9 +63,9 @@ public class loadProgramSettingsFromFile {
                     // Default parameters
                     else if(tokens[0].equals("VehicleLength")){
                         cBlock.VehicleLength=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("FreeFlowSpeedForAdvancedDetector")){
+                    }else if(tokens[0].equals("FreeFlowSpeedForAdvanceDetector")){
                         cBlock.FFSpeedForAdvDet=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("OccupancyThresholdForAdvancedDetector")){
+                    }else if(tokens[0].equals("OccupancyThresholdForAdvanceDetector")){
                         cBlock.OccThresholdForAdvDet=Double.parseDouble(tokens[1].trim());
                     }else if(tokens[0].equals("SaturationHeadway")){
                         cBlock.SaturationHeadway=Double.parseDouble(tokens[1].trim());
@@ -79,8 +79,8 @@ public class loadProgramSettingsFromFile {
                         cBlock.StartupLostTime=Double.parseDouble(tokens[1].trim());
                     }else if(tokens[0].equals("JamSpacing")){
                         cBlock.JamSpacing=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("DistanceAdvandedDetector")){
-                        cBlock.DistanceAdvandedDetector=Double.parseDouble(tokens[1].trim());
+                    }else if(tokens[0].equals("DistanceAdvanceDetector")){
+                        cBlock.DistanceAdvanceDetector=Double.parseDouble(tokens[1].trim());
                     }else if(tokens[0].equals("LeftTurnPocket")){
                         cBlock.LeftTurnPocket=Double.parseDouble(tokens[1].trim());
                     }else if(tokens[0].equals("RightTurnPocket")){
@@ -106,49 +106,49 @@ public class loadProgramSettingsFromFile {
                         String [] tmp=tokens[1].trim().split(",");
                         cBlock.RightTurnQueue=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("Advanced")){
+                    }else if(tokens[0].equals("Advance")){
                         String [] tmp=tokens[1].trim().split(",");
-                        cBlock.Advanced=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                        cBlock.Advance=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
                     }else if(tokens[0].equals("AllMovements")){
                         String [] tmp=tokens[1].trim().split(",");
                         cBlock.AllMovements=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvancedLeftTurn")){
+                    }else if(tokens[0].equals("AdvanceLeftTurn")){
                         String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AdvancedLeftTurn=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                        cBlock.AdvanceLeftTurn=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvancedRightTurn")){
+                    }else if(tokens[0].equals("AdvanceRightTurn")){
                         String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AdvancedRightTurn=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                        cBlock.AdvanceRightTurn=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvancedThrough")){
+                    }else if(tokens[0].equals("AdvanceThrough")){
                         String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AdvancedThrough=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                        cBlock.AdvanceThrough=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
                     }else if(tokens[0].equals("Through")){
                         String [] tmp=tokens[1].trim().split(",");
                         cBlock.Through=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvancedLeftAndThrough")){
+                    }else if(tokens[0].equals("AdvanceLeftAndThrough")){
                         String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AdvancedLeftAndThrough=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                        cBlock.AdvanceLeftAndThrough=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
                     }else if(tokens[0].equals("LeftAndThrough")){
                         String [] tmp=tokens[1].trim().split(",");
                         cBlock.LeftAndThrough=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvancedLeftAndRight")){
+                    }else if(tokens[0].equals("AdvanceLeftAndRight")){
                         String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AdvancedLeftAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                        cBlock.AdvanceLeftAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
                     }else if(tokens[0].equals("LeftAndRight")){
                         String [] tmp=tokens[1].trim().split(",");
                         cBlock.LeftAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvancedThroughAndRight")){
+                    }else if(tokens[0].equals("AdvanceThroughAndRight")){
                         String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AdvancedThroughAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                        cBlock.AdvanceThroughAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
                     }else if(tokens[0].equals("ThroughAndRight")){
                         String [] tmp=tokens[1].trim().split(",");
@@ -156,8 +156,21 @@ public class loadProgramSettingsFromFile {
                                 Double.parseDouble(tmp[2].trim())};
                     }
 
+                    // Aimsun simulation
+                    else if(tokens[0].equals("replicationName")){
+                        cBlock.replicationName=tokens[1].trim();
+                    }else if(tokens[0].equals("sqliteFileLocation")){
+                        cBlock.sqliteFileLocation=tokens[1].trim();
+                    }else if(tokens[0].equals("sqliteFileName")){
+                        cBlock.sqliteFileName=tokens[1].trim();
+                    }else if(tokens[0].equals("vehInfFolder")){
+                        cBlock.vehInfFolder=tokens[1].trim();
+                    }else if(tokens[0].equals("sigInfFolder")){
+                        cBlock.sigInfFolder=tokens[1].trim();
+                    }
+
                     else{
-                        System.out.println("Unkown input:"+tokens[0]);
+                        System.out.println("Unknown input:"+tokens[0]);
                     }
                 } // If confLine.length() > 0
             } // while read config file
