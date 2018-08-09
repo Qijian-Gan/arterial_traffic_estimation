@@ -4,6 +4,7 @@ package estimation;
  * Created by Qijian-Gan on 5/23/2018.
  */
 import com.sun.org.apache.xpath.internal.operations.Or;
+import gherkin.lexer.Fi;
 import main.MainFunction;
 import networkInput.readFromAimsun.*;
 import networkInput.reconstructNetwork.*;
@@ -13,16 +14,13 @@ import dataProvider.getSignalData.*;
 import dataProvider.getDetectorData.*;
 import estimation.trafficStateEstimation.*;
 import dataProvider.getSimulationData.*;
+import dataProvider.getEstimationResults.*;
 
 import org.apache.poi.ss.formula.functions.T;
 import sun.misc.Signal;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class trafficInitialization {
 
@@ -39,14 +37,14 @@ public class trafficInitialization {
             this.InitialSpeed=_InitialSpeed;
             this.TrackOrNot=_TrackOrNot;
         }
-        public int SectionID;
-        public int LaneID;
-        public int VehicleTypeInAimsun;
-        public int OriginCentroid;
-        public int DestinationCentroid;
-        public double InitialPosition;
-        public double InitialSpeed;
-        public boolean TrackOrNot;
+        protected int SectionID;
+        protected int LaneID;
+        protected int VehicleTypeInAimsun;
+        protected int OriginCentroid;
+        protected int DestinationCentroid;
+        protected double InitialPosition;
+        protected double InitialSpeed;
+        protected boolean TrackOrNot;
     }
 
     public static class VehicleAssignmentTmpStr{
@@ -56,58 +54,61 @@ public class trafficInitialization {
             this.IdxMovingVeh=_IdxMovingVeh;
             this.VehicleAssigned=_VehicleAssigned;
         }
-        public int IdxQueuedVeh;
-        public int IdxMovingVeh;
-        public List<SimVehicle> VehicleAssigned;
+        protected int IdxQueuedVeh;
+        protected int IdxMovingVeh;
+        protected List<SimVehicle> VehicleAssigned;
     }
 
     //************************************************************************************
     //************************** Vehicle Generation  *************************************
     //************************************************************************************
-    public static List<SimVehicle> VehicleGeneration(List<TrafficState> TrafficStateList,List<AimsunControlPlanJunction>
-            ActiveControlPlans, SimulationStatistics simulationStatistics){
+
+    /*
+    public static List<SimVehicle> VehicleGeneration(List<AimsunApproach> aimsunNetworkByApproach, Map<Integer,EstimationResults> estimationResultsList
+            ,List<AimsunControlPlanJunction> ActiveControlPlans, SimulationStatistics simulationStatistics,QueryMeasures queryMeasures){
         // This function is used to generate vehicles for Aimsun
 
         List<SimVehicle> simVehicleList=new ArrayList<SimVehicle>();
-        for (int i=0;i<TrafficStateList.size();i++){
-            if(TrafficStateList.get(i).aimsunApproach.getSignalized()==1){ // If it is a signalized junction
-                TrafficStateByApproach trafficStateByApproach=TrafficStateList.get(i).trafficStateByApproach;
-                if(trafficStateByApproach.queueThreshold!=null || (trafficStateByApproach.QueueByMovement[0]>=0 ||
-                        trafficStateByApproach.QueueByMovement[1]>=0||trafficStateByApproach.QueueByMovement[2]>=0)){
-                    // If we have estimated queues(non-negative values: -1 means no information; -2 means no such a movement)
-                    List<SimVehicle> tmpListSimVehicle=VehicleGenerationForSignalizedJunctionWithEstimation(TrafficStateList.get(i)
-                            ,ActiveControlPlans,simulationStatistics);
-                    simVehicleList.addAll(tmpListSimVehicle);
-                }else{// When no queue estimates, use the simulated traffic states from Aimsun instead
-                    List<SimVehicle> tmpListSimVehicle=VehicleGenerationForSignalizedJunctionWithSimulation(TrafficStateList.get(i),simulationStatistics);
+
+        if(aimsunNetworkByApproach.size()>0){
+            for(int i=0;i<aimsunNetworkByApproach.size();i++){
+                if(aimsunNetworkByApproach.get(i).getSignalized()==1){ // if it is a signalized junction
+                    int FirstSectionID=aimsunNetworkByApproach.get(i).getFirstSectionID();
+                    if(estimationResultsList.containsKey(FirstSectionID)){
+                        // If we have estimated queues(non-negative values: -1 means no information; -2 means no such a movement)
+                        List<SimVehicle> tmpListSimVehicle=VehicleGenerationForSignalizedJunctionWithEstimation(aimsunNetworkByApproach.get(i),
+                                estimationResultsList.get(FirstSectionID),ActiveControlPlans,simulationStatistics,queryMeasures);
+                        simVehicleList.addAll(tmpListSimVehicle);
+
+                    }else{// When no queue estimates, use the simulated traffic states from Aimsun instead
+                        List<SimVehicle> tmpListSimVehicle=VehicleGenerationForSignalizedJunctionWithSimulation(TrafficStateList.get(i),simulationStatistics);
+                        simVehicleList.addAll(tmpListSimVehicle);
+                    }
+                }
+                else{// If it is not a signalized junction, e.g., freeway junction
+                    // For unsignalized junction
+
+                    // If BEATs simulation is not available, use the Aimsun simulation results
+                    List<SimVehicle> tmpListSimVehicle=VehicleGenerationForUnsignalizedJunctionWithSimulation(TrafficStateList.get(i));
                     simVehicleList.addAll(tmpListSimVehicle);
                 }
-
-            }else{// If it is not a signalized junction, e.g., freeway junction
-                // For unsignalized junction
-
-                // If BEATs simulation is not available, use the Aimsun simulation results
-                List<SimVehicle> tmpListSimVehicle=VehicleGenerationForUnsignalizedJunctionWithSimulation(TrafficStateList.get(i));
-                simVehicleList.addAll(tmpListSimVehicle);
             }
         }
-
         return simVehicleList;
     }
 
+    */
+
     //*************** Vehicle Generation At Signalized Junction With Estimation *************************************
-    public static List<SimVehicle> VehicleGenerationForSignalizedJunctionWithEstimation(TrafficState trafficState
-            ,List<AimsunControlPlanJunction> ActiveControlPlans,SimulationStatistics simulationStatistics){
+    public static List<SimVehicle> VehicleGenerationForSignalizedJunctionWithEstimation(AimsunApproach aimsunApproach, EstimationResults estimationResults,
+            List<AimsunControlPlanJunction> ActiveControlPlans,SimulationStatistics simulationStatistics,QueryMeasures queryMeasures){
         // This function is used to generate vehicles from queue estimation results
 
-        QueryMeasures queryMeasures=trafficState.queryMeasures; // Query measures
-        Parameters parameters=trafficState.parameters; // Parameters
-        AimsunApproach aimsunApproach=trafficState.aimsunApproach; // Aimsun approach geometry
+        Parameters parameters=null; // Parameters
 
-        TrafficStateByApproach trafficStateByApproach=trafficState.trafficStateByApproach; // Estimated traffic states from detectors
-        int [] EstimatedQueues=trafficStateByApproach.QueueByMovement; // Estimated queues
-        String[] EstimatedStates=trafficStateByApproach.StateByMovement; // Estimated states
-        int EstimationTime=trafficStateByApproach.Time; // Current estimation time
+        int [] EstimatedQueues=estimationResults.getAssessmentStateAndQueue().QueueAssessment; // Estimated queues
+        String[] EstimatedStates=estimationResults.getAssessmentStateAndQueue().StatusAssessment; // Estimated states
+        int EstimationTime=estimationResults.getTime(); // Current estimation time
 
         // A 2*3 Matrix: row (queued, moving), column (left turn, through, right turn)
         int[][] QueuedAndMovingVehicles=AssignQueuedAndMovingAccordingToPhaseInfAndCurrentTime(EstimationTime,EstimatedQueues

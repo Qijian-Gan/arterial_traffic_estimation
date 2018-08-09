@@ -16,6 +16,7 @@ public class getTaskID {
         System.out.print("3:  Read and reconstruct the Aimsun network files\n"); // Read and reconstruct the network files
         System.out.print("4:  Load Aimsun simulation data to database\n"); // Load Aimsun simulation results
         System.out.print("5:  Arterial traffic estimation\n"); // Arterial traffic estimation
+        System.out.print("6:  Arterial traffic initialization\n"); // Arterial traffic initialization
         System.out.print("Please enter your selection (number):");
         taskID =Integer.parseInt(scanner.next());
         return taskID;

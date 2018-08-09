@@ -26,21 +26,37 @@ public class trafficStateEstimation {
     public static class Parameters{
         // Parameter settings
         public Parameters(VehicleParams _vehicleParams, IntersectionParams _intersectionParams,SignalSettings _signalSettings,
-                          TurningPrortions _turningPrortions,EstimationParams _estimationParams){
+                          TurningProportion _turningProportion,EstimationParams _estimationParams){
             this.vehicleParams=_vehicleParams;
             this.intersectionParams=_intersectionParams;
             this.signalSettings=_signalSettings;
-            this.turningPrortions=_turningPrortions;
+            this.turningProportion=_turningProportion;
             this.estimationParams=_estimationParams;
         }
         protected VehicleParams vehicleParams; // Vehicle parameters
         protected IntersectionParams intersectionParams; // Intersection parameters
         protected SignalSettings signalSettings; // Signal Settings
-        protected TurningPrortions turningPrortions; // Turning proportions
+        protected TurningProportion turningProportion; // Turning proportions
         protected EstimationParams estimationParams; // Estimation parameters
 
         public SignalSettings getSignalSettings() {
             return signalSettings;
+        }
+
+        public VehicleParams getVehicleParams() {
+            return vehicleParams;
+        }
+
+        public IntersectionParams getIntersectionParams() {
+            return intersectionParams;
+        }
+
+        public TurningProportion getTurningPrortions() {
+            return turningProportion;
+        }
+
+        public EstimationParams getEstimationParams() {
+            return estimationParams;
         }
     }
 
@@ -54,19 +70,31 @@ public class trafficStateEstimation {
         protected double VehicleLength;
         protected double StartupLostTime;
         protected double JamSpacing;
+
+        public double getVehicleLength() {
+            return VehicleLength;
+        }
+
+        public double getStartupLostTime() {
+            return StartupLostTime;
+        }
+
+        public double getJamSpacing() {
+            return JamSpacing;
+        }
     }
 
     public static class IntersectionParams{
         // Intersection parameters
         public IntersectionParams(double _SaturationHeadway,double _SaturationSpeedLeft,
                                   double _SaturationSpeedRight,double _SaturationSpeedThrough,
-                                  double _DistanceAdvandedDetector,double _LeftTurnPocket,
+                                  double _DistanceAdvanceDetector,double _LeftTurnPocket,
                                   double _RightTurnPocket,double _DistanceToEnd){
             this.SaturationHeadway=_SaturationHeadway;
             this.SaturationSpeedLeft=_SaturationSpeedLeft;
             this.SaturationSpeedThrough=_SaturationSpeedThrough;
             this.SaturationSpeedRight=_SaturationSpeedRight;
-            this.DistanceAdvanceDetector=_DistanceAdvandedDetector;
+            this.DistanceAdvanceDetector=_DistanceAdvanceDetector;
             this.LeftTurnPocket=_LeftTurnPocket;
             this.RightTurnPocket=_RightTurnPocket;
             this.DistanceToEnd=_DistanceToEnd;
@@ -79,6 +107,38 @@ public class trafficStateEstimation {
         protected double LeftTurnPocket;
         protected double RightTurnPocket;
         protected double DistanceToEnd;
+
+        public double getSaturationHeadway() {
+            return SaturationHeadway;
+        }
+
+        public double getSaturationSpeedLeft() {
+            return SaturationSpeedLeft;
+        }
+
+        public double getSaturationSpeedThrough() {
+            return SaturationSpeedThrough;
+        }
+
+        public double getSaturationSpeedRight() {
+            return SaturationSpeedRight;
+        }
+
+        public double getDistanceAdvanceDetector() {
+            return DistanceAdvanceDetector;
+        }
+
+        public double getLeftTurnPocket() {
+            return LeftTurnPocket;
+        }
+
+        public double getRightTurnPocket() {
+            return RightTurnPocket;
+        }
+
+        public double getDistanceToEnd() {
+            return DistanceToEnd;
+        }
     }
 
     public static class EstimationParams{
@@ -89,6 +149,14 @@ public class trafficStateEstimation {
         }
         protected double FFSpeedForAdvDet;
         protected double OccThresholdForAdvDet;
+
+        public double getFFSpeedForAdvDet() {
+            return FFSpeedForAdvDet;
+        }
+
+        public double getOccThresholdForAdvDet() {
+            return OccThresholdForAdvDet;
+        }
     }
 
     public static class SignalSettings{
@@ -127,9 +195,9 @@ public class trafficStateEstimation {
         }
     }
 
-    public static class TurningPrortions{
+    public static class TurningProportion{
         //Turning proportions
-        public TurningPrortions(double [] _LeftTurn,double [] _LeftTurnQueue,double [] _AdvanceLeftTurn,
+        public TurningProportion(double [] _LeftTurn,double [] _LeftTurnQueue,double [] _AdvanceLeftTurn,
                                 double [] _RightTurn,double [] _RightTurnQueue,double [] _AdvanceRightTurn,
                                 double [] _Advance,double [] _AllMovements,double [] _AdvanceThrough,
                                 double [] _Through,double [] _AdvanceLeftAndThrough,double [] _LeftAndThrough,
@@ -168,6 +236,62 @@ public class trafficStateEstimation {
         protected double [] LeftAndRight;
         protected double [] AdvanceThroughAndRight; // Through and right turn only
         protected double [] ThroughAndRight;
+
+        public double[] getLeftTurn() {
+            return LeftTurn;
+        }
+
+        public double[] getAdvanceLeftTurn() {
+            return AdvanceLeftTurn;
+        }
+
+        public double[] getRightTurn() {
+            return RightTurn;
+        }
+
+        public double[] getAdvanceRightTurn() {
+            return AdvanceRightTurn;
+        }
+
+        public double[] getAdvance() {
+            return Advance;
+        }
+
+        public double[] getAllMovements() {
+            return AllMovements;
+        }
+
+        public double[] getAdvanceThrough() {
+            return AdvanceThrough;
+        }
+
+        public double[] getThrough() {
+            return Through;
+        }
+
+        public double[] getAdvanceLeftAndThrough() {
+            return AdvanceLeftAndThrough;
+        }
+
+        public double[] getLeftAndThrough() {
+            return LeftAndThrough;
+        }
+
+        public double[] getAdvanceLeftAndRight() {
+            return AdvanceLeftAndRight;
+        }
+
+        public double[] getLeftAndRight() {
+            return LeftAndRight;
+        }
+
+        public double[] getAdvanceThroughAndRight() {
+            return AdvanceThroughAndRight;
+        }
+
+        public double[] getThroughAndRight() {
+            return ThroughAndRight;
+        }
     }
 
     // ***********************Query Measures*******************************
@@ -244,6 +368,10 @@ public class trafficStateEstimation {
 
         public QueryMeasures getQueryMeasures() {
             return queryMeasures;
+        }
+
+        public Parameters getParameters() {
+            return parameters;
         }
     }
 
@@ -490,8 +618,8 @@ public class trafficStateEstimation {
 
             // *****************Update the parameter settings******************
             // Update turning proportions
-            parameters.turningPrortions=UpdateVehicleProportions(parameters.turningPrortions,con,aimsunApproach, queryMeasures);
-            parameters.turningPrortions=UpdateVehicleProportionsAccordingToLandIndicator(parameters.turningPrortions
+            parameters.turningProportion=UpdateVehicleProportions(parameters.turningProportion,con,aimsunApproach, queryMeasures);
+            parameters.turningProportion=UpdateVehicleProportionsAccordingToLandIndicator(parameters.turningProportion
                     ,aimsunApproach.getGeoDesign().getTurnIndicator());
 
             // Update saturation speeds
@@ -1538,51 +1666,51 @@ public class trafficStateEstimation {
         // Find the corresponding proportions
         double Proportion=0;
         if(DetectorType.equals("Left Turn")){
-            Proportion=parameters.turningPrortions.LeftTurn[Index];
+            Proportion=parameters.turningProportion.LeftTurn[Index];
         }else if(DetectorType.equals("Left Turn Queue")){
-            Proportion=parameters.turningPrortions.LeftTurnQueue[Index];
+            Proportion=parameters.turningProportion.LeftTurnQueue[Index];
         }
         else if(DetectorType.equals("Right Turn")){
-            Proportion=parameters.turningPrortions.RightTurn[Index];
+            Proportion=parameters.turningProportion.RightTurn[Index];
         }
         else if(DetectorType.equals("Right Turn Queue")){
-            Proportion=parameters.turningPrortions.RightTurnQueue[Index];
+            Proportion=parameters.turningProportion.RightTurnQueue[Index];
         }
         else if(DetectorType.equals("Advance")){
-            Proportion=parameters.turningPrortions.Advance[Index];
+            Proportion=parameters.turningProportion.Advance[Index];
         }
         else if(DetectorType.equals("Advance Left Turn")){
-            Proportion=parameters.turningPrortions.AdvanceLeftTurn[Index];
+            Proportion=parameters.turningProportion.AdvanceLeftTurn[Index];
         }
         else if(DetectorType.equals("Advance Right Turn")){
-            Proportion=parameters.turningPrortions.AdvanceRightTurn[Index];
+            Proportion=parameters.turningProportion.AdvanceRightTurn[Index];
         }
         else if(DetectorType.equals("Advance Through")){
-            Proportion=parameters.turningPrortions.AdvanceThrough[Index];
+            Proportion=parameters.turningProportion.AdvanceThrough[Index];
         }
         else if(DetectorType.equals("Advance Through and Right")){
-            Proportion=parameters.turningPrortions.AdvanceThroughAndRight[Index];
+            Proportion=parameters.turningProportion.AdvanceThroughAndRight[Index];
         }
         else if(DetectorType.equals("Advance Left and Through")){
-            Proportion=parameters.turningPrortions.AdvanceLeftAndThrough[Index];
+            Proportion=parameters.turningProportion.AdvanceLeftAndThrough[Index];
         }
         else if(DetectorType.equals("Advance Left and Right")){
-            Proportion=parameters.turningPrortions.AdvanceLeftAndRight[Index];
+            Proportion=parameters.turningProportion.AdvanceLeftAndRight[Index];
         }
         else if(DetectorType.equals("All Movements")){
-            Proportion=parameters.turningPrortions.AllMovements[Index];
+            Proportion=parameters.turningProportion.AllMovements[Index];
         }
         else if(DetectorType.equals("Through")){
-            Proportion=parameters.turningPrortions.Through[Index];
+            Proportion=parameters.turningProportion.Through[Index];
         }
         else if(DetectorType.equals("Left and Right")){
-            Proportion=parameters.turningPrortions.LeftAndRight[Index];
+            Proportion=parameters.turningProportion.LeftAndRight[Index];
         }
         else if(DetectorType.equals("Left and Through")){
-            Proportion=parameters.turningPrortions.LeftAndThrough[Index];
+            Proportion=parameters.turningProportion.LeftAndThrough[Index];
         }
         else if(DetectorType.equals("Through and Right")){
-            Proportion=parameters.turningPrortions.ThroughAndRight[Index];
+            Proportion=parameters.turningProportion.ThroughAndRight[Index];
         }else
         {
             System.out.println("Wrong input of detector movement!");
@@ -1656,7 +1784,7 @@ public class trafficStateEstimation {
         EstimationParams estimationParams=new EstimationParams(MainFunction.cBlock.FFSpeedForAdvDet,
                 MainFunction.cBlock.OccThresholdForAdvDet);
         // Get turning proportions
-        TurningPrortions turningPrortions=new TurningPrortions(
+        TurningProportion turningPrortions=new TurningProportion(
                 MainFunction.cBlock.LeftTurn,MainFunction.cBlock.LeftTurnQueue,MainFunction.cBlock.AdvanceLeftTurn,
                 MainFunction.cBlock.RightTurn,MainFunction.cBlock.RightTurnQueue,MainFunction.cBlock.AdvanceRightTurn,
                 MainFunction.cBlock.Advance,MainFunction.cBlock.AllMovements,MainFunction.cBlock.AdvanceThrough,
@@ -1680,7 +1808,7 @@ public class trafficStateEstimation {
      * @param queryMeasures QueryMeasures class
      * @return TurningPrortions class
      */
-    public static TurningPrortions UpdateVehicleProportions(TurningPrortions turningPrortions,Connection con,
+    public static TurningProportion UpdateVehicleProportions(TurningProportion turningPrortions,Connection con,
                                                             AimsunApproach aimsunApproach, QueryMeasures queryMeasures){
         // This function is used to update vehicle's proportions given the queryMeasures
 
@@ -1761,7 +1889,7 @@ public class trafficStateEstimation {
      * @param LaneIndicator int []
      * @return TurningPrortions class
      */
-    public static TurningPrortions UpdateVehicleProportionsAccordingToLandIndicator(TurningPrortions turningPrortions,int [] LaneIndicator){
+    public static TurningProportion UpdateVehicleProportionsAccordingToLandIndicator(TurningProportion turningPrortions,int [] LaneIndicator){
         // This function is used to update vehicle proportions according to lane
         // indicators: only for lanes/detectors with all movements
 

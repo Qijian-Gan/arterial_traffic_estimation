@@ -1,8 +1,10 @@
 package dataProvider;
 
 import estimation.trafficStateEstimation.*;
+import gherkin.lexer.Ar;
 import util.util;
 
+import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -24,7 +26,7 @@ public class loadEstimationResults {
     public static void LoadEstimationResultsToDatabase(Connection con, String TableName, List<TrafficState> trafficStateList){
         // This function is used to load estimation results to the database
 
-        String timeStamp = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime());
+        long timeStamp =ConvertCurrentDateTimeToInteger();
 
         List<String> SQLStrings=new ArrayList<String>();
         for(int i=0;i<trafficStateList.size();i++){ // Loop for each intersection approach
@@ -94,7 +96,10 @@ public class loadEstimationResults {
                 SQLThreshold=SQLThreshold+queueThreshold.getQueueThresholdRight().getQueueToAdvance()+";"+
                         queueThreshold.getQueueThresholdRight().getQueueWithMaxGreen()+";"+
                         queueThreshold.getQueueThresholdRight().getQueueToEnd()+"&";
-                sql=sql+SQLThreshold+"\");";
+                sql=sql+SQLThreshold+"\",\"";
+
+                String paramsString=ConstructStringFromParameters(trafficState.getParameters());
+                sql=sql+paramsString+"\");";
 
                 SQLStrings.add(sql);
             }
@@ -110,7 +115,67 @@ public class loadEstimationResults {
 
     }
 
+    public static String ConstructStringFromParameters(Parameters parameters){
+        // This function is used to construct string from parameters
+
+        String parameterString="";
+
+        // Construct vehicle parameters
+        VehicleParams vehicleParams=parameters.getVehicleParams();
+        String vehParameters="vehicleParams{VehicleLength="+vehicleParams.getVehicleLength()+",StartupLostTime="
+                +vehicleParams.getStartupLostTime()+",JamSpacing="+vehicleParams.getJamSpacing()+"}";
+        parameterString=parameterString+vehParameters+";";
+
+        // Construct intersection parameters
+        IntersectionParams intersectionParams=parameters.getIntersectionParams();
+        String intParameters="intersectionParams{SaturationHeadway="+intersectionParams.getSaturationHeadway()+",SaturationSpeedLeft="+
+                intersectionParams.getSaturationSpeedLeft()+",SaturationSpeedThrough="+intersectionParams.getSaturationSpeedThrough()+
+                ",SaturationSpeedRight="+intersectionParams.getSaturationSpeedRight()+",DistanceAdvanceDetector="+
+                intersectionParams.getDistanceAdvanceDetector()+",LeftTurnPocket="+intersectionParams.getLeftTurnPocket()+
+                ",RightTurnPocket="+intersectionParams.getRightTurnPocket()+",DistanceToEnd="+intersectionParams.getDistanceToEnd()+"}";
+        parameterString=parameterString+intParameters+";";
+
+        // Construct signal settings
+        SignalSettings signalSettings=parameters.getSignalSettings();
+        String signalParams="signalSettings{CycleLength="+signalSettings.getCycleLength()+",LeftTurnGreen="+signalSettings.getLeftTurnGreen()+
+                ",ThroughGreen="+signalSettings.getThroughGreen()+",RightTurnGreen="+signalSettings.getRightTurnGreen()+
+                ",LeftTurnSetting="+signalSettings.getLeftTurnSetting()+"}";
+        parameterString=parameterString+signalParams+";";
+
+        // Construct turning proportions
+        TurningProportion turningPrortions=parameters.getTurningPrortions();
+        String turningParams="turningProportions{LeftTurn="+ArrayToString(turningPrortions.getLeftTurn())+",AdvanceLeftTurn="+
+                ArrayToString(turningPrortions.getAdvanceLeftTurn())+",RightTurn="+ArrayToString(turningPrortions.getRightTurn())+
+                ",AdvanceRightTurn="+ArrayToString(turningPrortions.getAdvanceRightTurn())+",Advance="+
+                ArrayToString(turningPrortions.getAdvance())+",AllMovements="+ArrayToString(turningPrortions.getAllMovements())+
+                ",AdvanceThrough="+ArrayToString(turningPrortions.getAdvanceThrough())+",Through="+ArrayToString(turningPrortions.getThrough())+
+                ",AdvanceLeftAndThrough="+ArrayToString(turningPrortions.getAdvanceLeftAndThrough())+",LeftAndThrough="+
+                ArrayToString(turningPrortions.getLeftAndThrough())+",AdvanceLeftAndRight="+ArrayToString(turningPrortions.getAdvanceLeftAndRight())+
+                ",LeftAndRight="+ArrayToString(turningPrortions.getLeftAndRight())+",AdvanceThroughAndRight="+
+                ArrayToString(turningPrortions.getAdvanceThroughAndRight())+",ThroughAndRight="+ArrayToString(turningPrortions.getThroughAndRight())+"}";
+        parameterString=parameterString+turningParams+";";
+
+        // Construct estimation parameters
+        EstimationParams estimationParams=parameters.getEstimationParams();
+        String estimationString="estimationParams{FFSpeedForAdvDet="+estimationParams.getFFSpeedForAdvDet()+",OccThresholdForAdvDet="+
+                estimationParams.getOccThresholdForAdvDet()+"}";
+        parameterString=parameterString+estimationString+";";
+
+        return parameterString;
+    }
+
+    public static String ArrayToString(double []InputArray){
+        // This function is convert array to string
+        String OutputString="";
+        for(int i=0;i<InputArray.length-1;i++){
+            OutputString=OutputString+InputArray[i]+"-";
+        }
+        OutputString=OutputString+InputArray[InputArray.length-1];
+        return OutputString;
+    }
+
     public static String ConstructStringFromDetectorState(List<TrafficStateByDetectorType> trafficStateByDetectorTypeList){
+        // This function is construct string for detector state
 
         String SQL="";
         for(int j=0;j<trafficStateByDetectorTypeList.size();j++){
@@ -120,5 +185,20 @@ public class loadEstimationResults {
             SQL=SQL+tmpSQL;
         }
         return SQL;
+    }
+
+    public static long ConvertCurrentDateTimeToInteger(){
+        // This function is used to convert current date & time into an integer
+
+        Calendar cal = Calendar.getInstance();
+        long Year=cal.get(Calendar.YEAR);
+        long Month=cal.get(Calendar.MONTH)+1; // Starts from zero, need to add 1
+        long Day=cal.get(Calendar.DAY_OF_MONTH);
+        long Hour=cal.get(Calendar.HOUR_OF_DAY);
+        long Minute=cal.get(Calendar.MINUTE);
+        long Second=cal.get(Calendar.SECOND);
+
+        long DateTime=(((Year*10000+Month*100+Day)*100+Hour)*100+Minute)*100+Second;
+        return DateTime;
     }
 }

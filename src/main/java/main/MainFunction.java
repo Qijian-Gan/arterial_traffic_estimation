@@ -15,7 +15,7 @@ import java.util.Properties;
 
 import config.getTaskID;
 import config.loadProgramSettingsFromFile;
-import dataProvider.getSignalData;
+import dataProvider.*;
 import settings.programSettings;
 import networkInput.readFromAimsun;
 import networkInput.readFromAimsun.*;
@@ -26,11 +26,9 @@ import estimation.trafficStateEstimation;
 import estimation.trafficStateEstimation.*;
 import estimation.trafficInitialization.*;
 import estimation.trafficInitialization;
-import dataProvider.loadSimulationData;
 import dataProvider.loadSimulationData.*;
-import dataProvider.getSimulationData;
 import dataProvider.getSimulationData.*;
-import dataProvider.loadEstimationResults;
+import dataProvider.getEstimationResults.*;
 
 
 public class MainFunction{
@@ -184,6 +182,53 @@ public class MainFunction{
             loadEstimationResults.LoadEstimationResultsToDatabase(conAimsunSimulation, "estimation_results", trafficStateList);
 
             //List<SimVehicle> simVehicleList=trafficInitialization.VehicleGeneration(trafficStateList,activeControlPlans,simulationStatistics);
+        }
+        else if(taksID==6){
+            System.out.print("6:  Arterial traffic initialization\n"); // Arterial traffic initialization
+            if(cBlock.AimsunFolder ==null){
+                System.out.println("Missing the folder name!");
+                System.exit(-1);
+            }
+
+            int EndTime=(int)7.5*3600;
+            int Interval=300;
+            int StartTime=Math.max(0,EndTime-Interval*3);
+
+            // Set query measures
+            QueryMeasures queryMeasures=new QueryMeasures(-1,-1,-1,
+                    8,true, new int []{StartTime,EndTime},Interval);
+
+            // Reconstruct the network by approach
+            reconstructNetwork.AimsunNetworkByApproach aimsunNetworkByApproach =reconstructNetwork.reconstructAimsunNetwork();
+
+            // Get the simulation statistics
+            hostAimsunSimulationSqlite="jdbc:sqlite:"+cBlock.sqliteFileLocation+"\\"+cBlock.sqliteFileName;
+            try {
+                conAimsunSimulationSqlite=DriverManager.getConnection(hostAimsunSimulationSqlite);
+                System.out.println("Succeeded to connect to the sqlite database!");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            try {
+                conAimsunSimulation= DriverManager.getConnection(hostAimsunSimulation, userName, password);
+                System.out.println("Succeeded to connect to the MySQL database!");
+            }catch(SQLException e){
+                e.printStackTrace();
+            }
+            SimulationStatistics simulationStatistics=getSimulationData.GetSimulationStatistics(conAimsunSimulationSqlite,conAimsunSimulation, EndTime,true
+                    ,true,true,true,true,true,true);
+
+            // Get the active control plans first
+            conActualFieldSignal=null;
+            List<AimsunControlPlanJunction> activeControlPlans=getSignalData.GetActiveControlPlansForGivenDayAndTime(aimsunNetworkByApproach
+                    , queryMeasures, conActualFieldSignal);
+
+
+            Map<Integer,EstimationResults> estimationResultsList=getEstimationResults.GetEstimationResultsFromDatabase(conAimsunSimulation,
+                    "estimation_results",queryMeasures);
+
+            //List<SimVehicle> simVehicleList=trafficInitialization.VehicleGeneration(aimsunNetworkByApproach.getAimsunNetworkByApproach(),
+            //       estimationResultsList,activeControlPlans,simulationStatistics,queryMeasures);
         }
         else{
             System.out.println("Unknown task!");
