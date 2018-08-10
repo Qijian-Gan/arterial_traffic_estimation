@@ -59,11 +59,13 @@ public class trafficInitialization {
         protected List<SimVehicle> VehicleAssigned;
     }
 
-    //************************************************************************************
-    //************************** Vehicle Generation  *************************************
-    //************************************************************************************
+    //***************************************************************************************************************
+    //***************************************************************************************************************
+    //************************** Vehicle Generation  ****************************************************************
+    //***************************************************************************************************************
+    //***************************************************************************************************************
 
-    /*
+    //******************************************* Main Function *****************************************************
     public static List<SimVehicle> VehicleGeneration(List<AimsunApproach> aimsunNetworkByApproach, Map<Integer,EstimationResults> estimationResultsList
             ,List<AimsunControlPlanJunction> ActiveControlPlans, SimulationStatistics simulationStatistics,QueryMeasures queryMeasures){
         // This function is used to generate vehicles for Aimsun
@@ -81,7 +83,7 @@ public class trafficInitialization {
                         simVehicleList.addAll(tmpListSimVehicle);
 
                     }else{// When no queue estimates, use the simulated traffic states from Aimsun instead
-                        List<SimVehicle> tmpListSimVehicle=VehicleGenerationForSignalizedJunctionWithSimulation(TrafficStateList.get(i),simulationStatistics);
+                        List<SimVehicle> tmpListSimVehicle=VehicleGenerationForSignalizedJunctionWithSimulation(aimsunNetworkByApproach.get(i),simulationStatistics);
                         simVehicleList.addAll(tmpListSimVehicle);
                     }
                 }
@@ -89,7 +91,7 @@ public class trafficInitialization {
                     // For unsignalized junction
 
                     // If BEATs simulation is not available, use the Aimsun simulation results
-                    List<SimVehicle> tmpListSimVehicle=VehicleGenerationForUnsignalizedJunctionWithSimulation(TrafficStateList.get(i));
+                    List<SimVehicle> tmpListSimVehicle=VehicleGenerationForUnsignalizedJunctionWithSimulation(aimsunNetworkByApproach.get(i),simulationStatistics);
                     simVehicleList.addAll(tmpListSimVehicle);
                 }
             }
@@ -97,15 +99,18 @@ public class trafficInitialization {
         return simVehicleList;
     }
 
-    */
+
+    //***************************************************************************************************************
+    //*************** Vehicle Generation At Signalized Junction *****************************************************
+    //***************************************************************************************************************
 
     //*************** Vehicle Generation At Signalized Junction With Estimation *************************************
     public static List<SimVehicle> VehicleGenerationForSignalizedJunctionWithEstimation(AimsunApproach aimsunApproach, EstimationResults estimationResults,
             List<AimsunControlPlanJunction> ActiveControlPlans,SimulationStatistics simulationStatistics,QueryMeasures queryMeasures){
         // This function is used to generate vehicles from queue estimation results
 
-        Parameters parameters=null; // Parameters
-
+        // Get necessary inputs
+        Parameters parameters=estimationResults.getParameters(); // Parameters
         int [] EstimatedQueues=estimationResults.getAssessmentStateAndQueue().QueueAssessment; // Estimated queues
         String[] EstimatedStates=estimationResults.getAssessmentStateAndQueue().StatusAssessment; // Estimated states
         int EstimationTime=estimationResults.getTime(); // Current estimation time
@@ -320,6 +325,16 @@ public class trafficInitialization {
         return SelectLanes;
     }
 
+
+    /**
+     *
+     * @param EstimationTime Estimation Time
+     * @param EstimationQueues Estimation Queues int[3]
+     * @param aimsunApproach AimsunApproach (class)
+     * @param parameters Parameters (class)
+     * @param ActiveControlPlans List<AimsunControlPlanJunction> class
+     * @return QueuedAndMovingVehicles: A 2*3 Matrix: row (queued, moving), column (left turn, through, right turn)
+     */
     public static int[][] AssignQueuedAndMovingAccordingToPhaseInfAndCurrentTime(int EstimationTime,int[] EstimationQueues, AimsunApproach aimsunApproach
             , Parameters parameters, List<AimsunControlPlanJunction> ActiveControlPlans){
         // This function is used to assign queued and moving vehicles according to the phase information and current estimation time
@@ -335,7 +350,7 @@ public class trafficInitialization {
         if(ActiveControlPlans.size()==0){
             // If no active control plans available
             for(int j=0;j<3;j++){
-                if(EstimationQueues[j]>0){
+                if(EstimationQueues[j]>0){ // Half for queued vehicles, and the other half for moving vehicles
                     QueuedAndMovingVehicles[0][j]= (int) Math.ceil(EstimationQueues[j]*0.5); // Queued vehicles
                     QueuedAndMovingVehicles[1][j]= (int) Math.ceil(EstimationQueues[j]*0.5); // Moving Vehicles
                 }
@@ -373,14 +388,19 @@ public class trafficInitialization {
                 }
             }
         }
-
         return QueuedAndMovingVehicles;
     }
 
+    /**
+     *
+     * @param signalByMovementList  List<SignalByMovement> class
+     * @param Movement Movement: Left Turn, Through, Right Turn
+     * @return SignalByMovement class
+     */
     public static SignalByMovement GetCorrespondingSigalByMovement(List<SignalByMovement> signalByMovementList, String Movement){
         // Get the corresponding signal by movement
 
-        // Find the right signal inf with the given movement
+        // Find the right signal information with the given movement
         List<SignalByMovement> selectedSignalByMovement=new ArrayList<SignalByMovement>();
         for(int i=0;i<signalByMovementList.size();i++){
             if(signalByMovementList.get(i).getMovement().equals(Movement)){
@@ -411,9 +431,16 @@ public class trafficInitialization {
         }
     }
 
+    /**
+     *
+     * @param AverageQueue Average Queue
+     * @param signalByMovement SignalByMovement class
+     * @param Headway Vehcle saturation headway
+     * @return MaxMinQueue: int [min, max]
+     */
     public static int[] DetermineMaxAndMinVehicles(int AverageQueue,SignalByMovement signalByMovement,double Headway){
         // This function is used to determine the maximum and minimum numbers of queued vehicles
-        int [] MaxMinQueue =new int[]{0,0};
+        int [] MaxMinQueue =new int[]{0,0}; // [Min, Max]
 
         double GreenTime=signalByMovement.getGreenTime();
         double NumVehicleByGreen=GreenTime/Headway;
@@ -432,6 +459,12 @@ public class trafficInitialization {
         return MaxMinQueue;
     }
 
+    /**
+     *
+     * @param MaxMinQueuedVehicles int[min, max]
+     * @param signalByMovement SignalByMovement class
+     * @return NumQueuedAndMoving: int[queued, moving]
+     */
     public static int[] DetermineQueuedAndMovingVehicles(int [] MaxMinQueuedVehicles, SignalByMovement signalByMovement){
         // This function is used to determine the proportions of queued and moving vehicles based on the signal input
         // This part contains some engineering adjustments
@@ -468,23 +501,40 @@ public class trafficInitialization {
 
 
     //*************** Vehicle Generation At Signalized Junction With Simulation *************************************
-    public static List<SimVehicle> VehicleGenerationForSignalizedJunctionWithSimulation(TrafficState trafficState
+    /**
+     *
+     * @param aimsunApproach AimsunApproach class
+     * @param simulationStatistics SimulationStatistics class
+     * @return List<SimVehicle> class
+     */
+    public static List<SimVehicle> VehicleGenerationForSignalizedJunctionWithSimulation(AimsunApproach aimsunApproach
             , SimulationStatistics simulationStatistics){
         // This function is used to generate vehicles from the backup simulations in Aimsun
+
+        List<SimVehicle> simVehicleList=VehicleGenerationFromSimulation(aimsunApproach, simulationStatistics.getSimVehInfBySectionList());
+        return simVehicleList;
+    }
+
+    /**
+     *
+     * @param aimsunApproach AimsunApproach class
+     * @param simVehInfBySectionList List<SimVehInfBySection> class
+     * @return List<SimVehicle> class
+     */
+    public static List<SimVehicle> VehicleGenerationFromSimulation(AimsunApproach aimsunApproach,
+                                                                   List<SimVehInfBySection> simVehInfBySectionList){
+        // This function is used to generate vehicles using simulation results
 
         // Columns in the MySQl Table:
         // Time, VehicleID, VehicleType, SectionID, LaneID, CurrentPosition, CurrentSpeed, CentroidOrigin,
         // CentroidDestination, DistanceToEnd
-
         List<SimVehicle> simVehicleList=new ArrayList<SimVehicle>();
 
-        AimsunApproach aimsunApproach=trafficState.aimsunApproach;
         int JunctionID=aimsunApproach.getJunctionID();
         int FirstSectionID=aimsunApproach.getFirstSectionID();
         List<Integer> ListOfSections=aimsunApproach.getSectionBelongToApproach().getListOfSections();
 
         // Select the vehicle trajectories within the ListOfSections
-        List<SimVehInfBySection> simVehInfBySectionList=simulationStatistics.getSimVehInfBySectionList();
         List<SimVehInfBySection> SelectedSimVehInf=new ArrayList<SimVehInfBySection>();
         for(int i=0;i<ListOfSections.size();i++){// Loop for each section
             for(int j=0;j<simVehInfBySectionList.size();j++){ // Loop for the available set of sections
@@ -519,22 +569,30 @@ public class trafficInitialization {
         return simVehicleList;
     }
 
+    //***************************************************************************************************************
+    //*************** Vehicle Generation At UnSignalized Junction (Freeway) *****************************************
+    //***************************************************************************************************************
 
+    //*************** Vehicle Generation At UnSignalized Junction With Simulation ***********************************
 
-    //*************** Vehicle Generation At UnSignalized Junction (Freeway) With Simulation *************************
-    public static List<SimVehicle> VehicleGenerationForUnsignalizedJunctionWithSimulation(TrafficState trafficState){
+    /**
+     *
+     * @param aimsunApproach AimsunApproach class
+     * @param simulationStatistics SimulationStatistics class
+     * @return List<SimVehicle> class
+     */
+    public static List<SimVehicle> VehicleGenerationForUnsignalizedJunctionWithSimulation(AimsunApproach aimsunApproach
+            , SimulationStatistics simulationStatistics){
         // This function is used to generate vehicles for the unsignalized junction with Aimsun simulation backup
-
-        List<SimVehicle> simVehicleList=new ArrayList<SimVehicle>();
-
+        List<SimVehicle> simVehicleList=VehicleGenerationFromSimulation(aimsunApproach, simulationStatistics.getSimVehInfBySectionList());
         return simVehicleList;
     }
 
-
-
-    //************************************************************************************
-    //************************** Active Phase Determination*******************************
-    //************************************************************************************
+    //***************************************************************************************************************
+    //***************************************************************************************************************
+    //************************** Active Phase Determination**********************************************************
+    //***************************************************************************************************************
+    //***************************************************************************************************************
     public static void ActivePhaseDetermination(){
         // This function is used to determine active phases
 

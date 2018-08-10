@@ -34,6 +34,10 @@ public class getEstimationResults {
             return assessmentStateAndQueue;
         }
 
+        public Parameters getParameters() {
+            return parameters;
+        }
+
         public int getTime() {
             return Time;
         }

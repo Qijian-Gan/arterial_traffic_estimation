@@ -227,8 +227,8 @@ public class MainFunction{
             Map<Integer,EstimationResults> estimationResultsList=getEstimationResults.GetEstimationResultsFromDatabase(conAimsunSimulation,
                     "estimation_results",queryMeasures);
 
-            //List<SimVehicle> simVehicleList=trafficInitialization.VehicleGeneration(aimsunNetworkByApproach.getAimsunNetworkByApproach(),
-            //       estimationResultsList,activeControlPlans,simulationStatistics,queryMeasures);
+            List<SimVehicle> simVehicleList=trafficInitialization.VehicleGeneration(aimsunNetworkByApproach.getAimsunNetworkByApproach(),
+                   estimationResultsList,activeControlPlans,simulationStatistics,queryMeasures);
         }
         else{
             System.out.println("Unknown task!");
