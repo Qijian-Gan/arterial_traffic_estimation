@@ -408,6 +408,14 @@ public class readFromAimsun {
         protected double[][] ShapePoints; // Shape points
         protected AimsunJunction DownstreamJunction=null; // This is used to reconstruct the network
         protected AimsunJunction UpstreamJunction=null; // This is used to reconstruct the network
+
+        public double[] getLaneLengths() {
+            return LaneLengths;
+        }
+
+        public int getNumLanes() {
+            return NumLanes;
+        }
     }
 
 

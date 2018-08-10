@@ -147,23 +147,6 @@ public class MainFunction{
             QueryMeasures queryMeasures=new QueryMeasures(-1,-1,-1,
                     8,true, new int []{StartTime,EndTime},Interval);
 
-            // Get the simulation statistics
-            hostAimsunSimulationSqlite="jdbc:sqlite:"+cBlock.sqliteFileLocation+"\\"+cBlock.sqliteFileName;
-            try {
-                conAimsunSimulationSqlite=DriverManager.getConnection(hostAimsunSimulationSqlite);
-                System.out.println("Succeeded to connect to the sqlite database!");
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            try {
-                conAimsunSimulation= DriverManager.getConnection(hostAimsunSimulation, userName, password);
-                System.out.println("Succeeded to connect to the MySQL database!");
-            }catch(SQLException e){
-                e.printStackTrace();
-            }
-            SimulationStatistics simulationStatistics=getSimulationData.GetSimulationStatistics(conAimsunSimulationSqlite,conAimsunSimulation, EndTime,true
-                    ,true,true,true,true,true,true);
-
             // Get the active control plans first
             conActualFieldSignal=null;
             List<AimsunControlPlanJunction> activeControlPlans=getSignalData.GetActiveControlPlansForGivenDayAndTime(aimsunNetworkByApproach
@@ -190,7 +173,7 @@ public class MainFunction{
                 System.exit(-1);
             }
 
-            int EndTime=(int)7.5*3600;
+            int EndTime=(int)(7.5*3600);
             int Interval=300;
             int StartTime=Math.max(0,EndTime-Interval*3);
 
@@ -223,12 +206,11 @@ public class MainFunction{
             List<AimsunControlPlanJunction> activeControlPlans=getSignalData.GetActiveControlPlansForGivenDayAndTime(aimsunNetworkByApproach
                     , queryMeasures, conActualFieldSignal);
 
-
             Map<Integer,EstimationResults> estimationResultsList=getEstimationResults.GetEstimationResultsFromDatabase(conAimsunSimulation,
                     "estimation_results",queryMeasures);
 
             List<SimVehicle> simVehicleList=trafficInitialization.VehicleGeneration(aimsunNetworkByApproach.getAimsunNetworkByApproach(),
-                   estimationResultsList,activeControlPlans,simulationStatistics,queryMeasures);
+                   estimationResultsList,activeControlPlans,simulationStatistics);
         }
         else{
             System.out.println("Unknown task!");

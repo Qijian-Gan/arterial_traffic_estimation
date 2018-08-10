@@ -60,6 +60,10 @@ public class getSimulationData {
         public List<SimVehInfBySection> getSimVehInfBySectionList() {
             return simVehInfBySectionList;
         }
+
+        public List<LaneStatisticsByObjectID> getLaneStatisticsByObjectIDList() {
+            return laneStatisticsByObjectIDList;
+        }
     }
 
     /**
@@ -117,6 +121,72 @@ public class getSimulationData {
     }
 
     //*********************************************************************
+    // Get Sim_Inf
+    //*********************************************************************
+    public static class SimInfFromSqlite{
+        public SimInfFromSqlite(List<Double> _fromTimeList,List<Integer> _objectIDList,List<Long> _execDateTimeList){
+            this.fromTimeList=_fromTimeList;
+            this.objectIDList=_objectIDList;
+            this.execDateTimeList=_execDateTimeList;
+        }
+        protected List<Double> fromTimeList;
+        protected List<Integer> objectIDList;
+        protected List<Long> execDateTimeList;
+
+    }
+
+    /**
+     *
+     * @param con Database connection
+     * @return SimInfFromSqlite class
+     */
+    public static SimInfFromSqlite GetSimInfFromSqlite(Connection con){
+        // This function is used to get simulation information from the sqlite database
+
+        // Check the SIM_INFO table
+        List<Double> fromTimeList=new ArrayList<Double>();
+        List<Integer> objectIDList=new ArrayList<Integer>();
+        List<Long> execDateTimeList=new ArrayList<Long>();
+        try {
+            Statement ps=con.createStatement();
+            ResultSet resultset=ps.executeQuery("select did,from_time, exec_date from SIM_INFO");
+            while(resultset.next()){ // Always get the last one.
+                objectIDList.add(resultset.getInt("did"));
+                fromTimeList.add(resultset.getDouble("from_time"));
+                String execDateTimeStr=resultset.getString("exec_date");
+                execDateTimeList.add(ConvertDateTimeStringToInteger(execDateTimeStr));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return new SimInfFromSqlite(fromTimeList,objectIDList,execDateTimeList);
+    }
+
+    /**
+     *
+     * @param DateTimeStr String
+     * @return long DateTime
+     */
+    public static long ConvertDateTimeStringToInteger(String DateTimeStr){
+        // This function is used to convert current date & time into an integer
+
+        String[] strings=DateTimeStr.split("T"); // In mysqlite database, Date and Time are separated by "T"
+        String[] DateStr=strings[0].split("-");
+        long Year=Long.parseLong(DateStr[0].trim());
+        long Month=Long.parseLong(DateStr[1].trim());
+        long Day=Long.parseLong(DateStr[2].trim());
+
+        String[] TimeStr=strings[1].split(":");
+        long Hour=Long.parseLong(TimeStr[0].trim());
+        long Minute=Long.parseLong(TimeStr[1].trim());
+        long Second=Long.parseLong(TimeStr[2].trim());
+
+        long DateTime=(((Year*10000+Month*100+Day)*100+Hour)*100+Minute)*100+Second;
+        return DateTime;
+    }
+
+    //*********************************************************************
     // Get the microscopic turning information
     //*********************************************************************
     public static class TurningStatistics{
@@ -134,17 +204,19 @@ public class getSimulationData {
     public static class TurningStatisticsByObjectID{
         // This is the profile of turning statistics by object ID
         public TurningStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                ,List<TurningStatistics> _turningStatisticsList){
+                ,long _ExecDateTime,List<TurningStatistics> _turningStatisticsList){
             this.InputTime=_InputTime;
             this.ObjectID=_ObjectID;
             this.FromTime=_FromTime;
             this.Interval=_Interval;
+            this.ExecDateTime=_ExecDateTime;
             this.turningStatisticsList=_turningStatisticsList;
         }
         protected double InputTime;
         protected int ObjectID;
         protected double FromTime;
         protected int Interval;
+        protected long ExecDateTime;
         protected List<TurningStatistics> turningStatisticsList;
     }
 
@@ -160,18 +232,10 @@ public class getSimulationData {
         // past 5 minutes)
 
         // Check the SIM_INFO table
-        List<Double> fromTimeList=new ArrayList<Double>();
-        List<Integer> objectIDList=new ArrayList<Integer>();
-        try {
-            Statement ps=con.createStatement();
-            ResultSet resultset=ps.executeQuery("select did,from_time from SIM_INFO");
-            while(resultset.next()){ // Always get the last one.
-                objectIDList.add(resultset.getInt("did"));
-                fromTimeList.add(resultset.getDouble("from_time"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
+        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
+        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
+        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
 
         // Check the MITURN table
         // Parameters:
@@ -185,6 +249,7 @@ public class getSimulationData {
         for(int i=0;i<objectIDList.size();i++){
             int ObjectID=objectIDList.get(i);
             double FromTime=fromTimeList.get(i);
+            long ExecDateTime=execDateTimeList.get(i);
             if(InputTime>FromTime) {
                 int Interval=(int) (Math.ceil(InputTime-FromTime)/OutputInterval);
                 if(Interval>=1) {
@@ -201,7 +266,7 @@ public class getSimulationData {
                         }
                         if(turningStatisticsList.size()!=0){
                             turningStatisticsByObjectIDList.add(new TurningStatisticsByObjectID(
-                                    InputTime,ObjectID,FromTime,Interval,turningStatisticsList));
+                                    InputTime,ObjectID,FromTime,Interval,ExecDateTime,turningStatisticsList));
                         }
                     } catch (SQLException e) {
                         e.printStackTrace();
@@ -239,17 +304,19 @@ public class getSimulationData {
     public static class LaneStatisticsByObjectID{
         // This is the profile of lane statistics by object ID
         public LaneStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                , List<LaneStatistics> _laneStatisticsList){
+                ,long _ExecDateTime, List<LaneStatistics> _laneStatisticsList){
             this.InputTime=_InputTime;
             this.ObjectID=_ObjectID;
             this.FromTime=_FromTime;
             this.Interval=_Interval;
+            this.ExecDateTime=_ExecDateTime;
             this.laneStatisticsList=_laneStatisticsList;
         }
         protected double InputTime;
         protected int ObjectID;
         protected double FromTime;
         protected int Interval;
+        protected long ExecDateTime;
         protected List<LaneStatistics> laneStatisticsList;
     }
 
@@ -265,18 +332,10 @@ public class getSimulationData {
         // past 5 minutes)
 
         // Check the SIM_INFO table
-        List<Double> fromTimeList=new ArrayList<Double>();
-        List<Integer> objectIDList=new ArrayList<Integer>();
-        try {
-            Statement ps=con.createStatement();
-            ResultSet resultset=ps.executeQuery("select did,from_time from SIM_INFO");
-            while(resultset.next()){ // Always get the last one.
-                objectIDList.add(resultset.getInt("did"));
-                fromTimeList.add(resultset.getDouble("from_time"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
+        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
+        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
+        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
 
         // Check the MILANE table
         // did: replication ID
@@ -293,6 +352,7 @@ public class getSimulationData {
         for(int i=0;i<objectIDList.size();i++){
             int ObjectID=objectIDList.get(i);
             double FromTime=fromTimeList.get(i);
+            long  ExecDateTime=execDateTimeList.get(i);
             if(InputTime>FromTime) {
                 int Interval=(int) (Math.ceil(InputTime-FromTime)/OutputInterval);
                 if(Interval>=1) {
@@ -318,7 +378,7 @@ public class getSimulationData {
                             laneStatisticsList.add(new LaneStatistics(SectionID,LaneID,VehicleType,LaneFlow,LaneFlowStd,LaneSpeed,LaneSpeedStd));
                         }
                         if(laneStatisticsList.size()!=0){
-                            laneStatisticsByObjectIDList.add(new LaneStatisticsByObjectID(InputTime,ObjectID,FromTime,Interval,laneStatisticsList));
+                            laneStatisticsByObjectIDList.add(new LaneStatisticsByObjectID(InputTime,ObjectID,FromTime,Interval,ExecDateTime,laneStatisticsList));
                         }
                     } catch (SQLException e) {
                         e.printStackTrace();
@@ -354,17 +414,19 @@ public class getSimulationData {
     public static class SectionStatisticsByObjectID{
         // This is the profile of section statistics by object ID
         public SectionStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                , List<SectionStatistics> _SectionStatistics){
+                , long _ExecDateTime, List<SectionStatistics> _SectionStatistics){
             this.InputTime=_InputTime;
             this.ObjectID=_ObjectID;
             this.FromTime=_FromTime;
             this.Interval=_Interval;
+            this.ExecDateTime=_ExecDateTime;
             this.sectionStatisticsList=_SectionStatistics;
         }
         protected double InputTime;
         protected int ObjectID;
         protected double FromTime;
         protected int Interval;
+        protected long ExecDateTime;
         protected List<SectionStatistics> sectionStatisticsList;
     }
 
@@ -380,18 +442,10 @@ public class getSimulationData {
         // past 5 minutes)
 
         // Check the SIM_INFO table
-        List<Double> fromTimeList=new ArrayList<Double>();
-        List<Integer> objectIDList=new ArrayList<Integer>();
-        try {
-            Statement ps=con.createStatement();
-            ResultSet resultset=ps.executeQuery("select did,from_time from SIM_INFO");
-            while(resultset.next()){ // Always get the last one.
-                objectIDList.add(resultset.getInt("did"));
-                fromTimeList.add(resultset.getDouble("from_time"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
+        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
+        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
+        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
 
         // Check the MISECT table
         // did: replication ID
@@ -407,6 +461,7 @@ public class getSimulationData {
         for(int i=0;i<objectIDList.size();i++){
             int ObjectID=objectIDList.get(i);
             double FromTime=fromTimeList.get(i);
+            long ExecDateTime=execDateTimeList.get(i);
             if(InputTime>FromTime) {
                 int Interval=(int) (Math.ceil(InputTime-FromTime)/OutputInterval);
                 if(Interval>=1) {
@@ -433,7 +488,7 @@ public class getSimulationData {
                         }
                         if(sectionStatisticsList.size()!=0){
                             sectionStatisticsByObjectIDArrayList.add(new SectionStatisticsByObjectID(InputTime,ObjectID,
-                                    FromTime,Interval,sectionStatisticsList));
+                                    FromTime,Interval,ExecDateTime,sectionStatisticsList));
                         }
                     } catch (SQLException e) {
                         e.printStackTrace();
@@ -466,17 +521,19 @@ public class getSimulationData {
     public static class ControlTurnStatisticsByObjectID{
         // This is the profile of control turn statistics by object ID
         public ControlTurnStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                , List<ControlTurnStatistics> _ControlTurnStatistics){
+                ,long _ExecDateTime , List<ControlTurnStatistics> _ControlTurnStatistics){
             this.InputTime=_InputTime;
             this.ObjectID=_ObjectID;
             this.FromTime=_FromTime;
             this.Interval=_Interval;
+            this.ExecDateTime=_ExecDateTime;
             this.controlTurnStatisticsList=_ControlTurnStatistics;
         }
         protected double InputTime;
         protected int ObjectID;
         protected double FromTime;
         protected int Interval;
+        protected long ExecDateTime;
         protected List<ControlTurnStatistics> controlTurnStatisticsList;
     }
 
@@ -492,18 +549,10 @@ public class getSimulationData {
         // past 5 minutes)
 
         // Check the SIM_INFO table
-        List<Double> fromTimeList=new ArrayList<Double>();
-        List<Integer> objectIDList=new ArrayList<Integer>();
-        try {
-            Statement ps=con.createStatement();
-            ResultSet resultset=ps.executeQuery("select did,from_time from SIM_INFO");
-            while(resultset.next()){ // Always get the last one.
-                objectIDList.add(resultset.getInt("did"));
-                fromTimeList.add(resultset.getDouble("from_time"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
+        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
+        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
+        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
 
         // Check the MICONTROLTURN table
         // did: replication ID
@@ -520,6 +569,7 @@ public class getSimulationData {
         for(int i=0;i<objectIDList.size();i++){
             int ObjectID=objectIDList.get(i);
             double FromTime=fromTimeList.get(i);
+            long ExecDateTime=execDateTimeList.get(i);
             if(InputTime>FromTime) {
                 int Interval=(int) (Math.ceil(InputTime-FromTime)/OutputInterval);
                 if(Interval>=1) {
@@ -538,7 +588,7 @@ public class getSimulationData {
                         }
                         if(controlTurnStatisticsList.size()!=0){
                             controlTurnStatisticsByObjectIDArrayList.add(new ControlTurnStatisticsByObjectID(
-                                    InputTime,ObjectID,FromTime,Interval,controlTurnStatisticsList));
+                                    InputTime,ObjectID,FromTime,Interval,ExecDateTime,controlTurnStatisticsList));
                         }
                     } catch (SQLException e) {
                         e.printStackTrace();
@@ -574,17 +624,19 @@ public class getSimulationData {
     public static class ControlSignalStatisticsByObjectID{
         // This is the profile of control signal statistics by object ID
         public ControlSignalStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                , List<ControlSignalStatistics> _controlSignalStatisticsList){
+                ,long _ExecDateTime, List<ControlSignalStatistics> _controlSignalStatisticsList){
             this.InputTime=_InputTime;
             this.ObjectID=_ObjectID;
             this.FromTime=_FromTime;
             this.Interval=_Interval;
+            this.ExecDateTime=_ExecDateTime;
             this.controlSignalStatisticsList=_controlSignalStatisticsList;
         }
         protected double InputTime;
         protected int ObjectID;
         protected double FromTime;
         protected int Interval;
+        protected long ExecDateTime;
         protected List<ControlSignalStatistics> controlSignalStatisticsList;
     }
 
@@ -600,18 +652,10 @@ public class getSimulationData {
         // past 5 minutes)
 
         // Check the SIM_INFO table
-        List<Double> fromTimeList=new ArrayList<Double>();
-        List<Integer> objectIDList=new ArrayList<Integer>();
-        try {
-            Statement ps=con.createStatement();
-            ResultSet resultset=ps.executeQuery("select did,from_time from SIM_INFO");
-            while(resultset.next()){ // Always get the last one.
-                objectIDList.add(resultset.getInt("did"));
-                fromTimeList.add(resultset.getDouble("from_time"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
+        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
+        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
+        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
 
         // Check the MICONTROLSIGNAL table
         // did: replication ID
@@ -629,6 +673,7 @@ public class getSimulationData {
         for(int i=0;i<objectIDList.size();i++){
             int ObjectID=objectIDList.get(i);
             double FromTime=fromTimeList.get(i);
+            long ExecDateTime=execDateTimeList.get(i);
             if(InputTime>FromTime) {
                 int Interval=(int) (Math.ceil(InputTime-FromTime)/OutputInterval);
                 if(Interval>=1) {
@@ -649,7 +694,7 @@ public class getSimulationData {
                         }
                         if(controlSignalStatisticsList.size()!=0){
                             controlSignalStatisticsByObjectIDArrayList.add(new ControlSignalStatisticsByObjectID(
-                                    InputTime,ObjectID,FromTime,Interval,controlSignalStatisticsList));
+                                    InputTime,ObjectID,FromTime,Interval,ExecDateTime,controlSignalStatisticsList));
                         }
                     } catch (SQLException e) {
                         e.printStackTrace();
@@ -682,17 +727,19 @@ public class getSimulationData {
     public static class ControlPhaseStatisticsByObjectID{
         // This is the profile of control phase statistics by object ID
         public ControlPhaseStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                , List<ControlPhaseStatistics> _controlPhaseStatisticsList){
+                ,long _ExecDateTime, List<ControlPhaseStatistics> _controlPhaseStatisticsList){
             this.InputTime=_InputTime;
             this.ObjectID=_ObjectID;
             this.FromTime=_FromTime;
             this.Interval=_Interval;
+            this.ExecDateTime=_ExecDateTime;
             this.controlPhaseStatisticsList=_controlPhaseStatisticsList;
         }
         protected double InputTime;
         protected int ObjectID;
         protected double FromTime;
         protected int Interval;
+        protected long ExecDateTime;
         protected List<ControlPhaseStatistics> controlPhaseStatisticsList;
     }
 
@@ -708,18 +755,10 @@ public class getSimulationData {
         // past 5 minutes)
 
         // Check the SIM_INFO table
-        List<Double> fromTimeList=new ArrayList<Double>();
-        List<Integer> objectIDList=new ArrayList<Integer>();
-        try {
-            Statement ps=con.createStatement();
-            ResultSet resultset=ps.executeQuery("select did,from_time from SIM_INFO");
-            while(resultset.next()){ // Always get the last one.
-                objectIDList.add(resultset.getInt("did"));
-                fromTimeList.add(resultset.getDouble("from_time"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
+        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
+        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
+        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
 
         // Check the MICONTROLPHASE table
         // did: replication ID
@@ -734,6 +773,7 @@ public class getSimulationData {
         for(int i=0;i<objectIDList.size();i++){
             int ObjectID=objectIDList.get(i);
             double FromTime=fromTimeList.get(i);
+            long ExecDateTime=execDateTimeList.get(i);
             if(InputTime>FromTime) {
                 int Interval=(int) (Math.ceil(InputTime-FromTime)/OutputInterval);
                 if(Interval>=1) {
@@ -752,7 +792,7 @@ public class getSimulationData {
                         }
                         if(controlPhaseStatisticsList.size()!=0){
                             controlPhaseStatisticsByObjectIDArrayList.add(new ControlPhaseStatisticsByObjectID(
-                                    InputTime,ObjectID,FromTime,Interval,controlPhaseStatisticsList));
+                                    InputTime,ObjectID,FromTime,Interval,ExecDateTime,controlPhaseStatisticsList));
                         }
                     } catch (SQLException e) {
                         e.printStackTrace();
@@ -1074,4 +1114,8 @@ public class getSimulationData {
         }
         return simVehInfBySectionList;
     }
+
 }
+
+
+
