@@ -16,8 +16,12 @@ import estimation.trafficStateEstimation.*;
 import dataProvider.getSimulationData.*;
 import dataProvider.getEstimationResults.*;
 
+import org.apache.commons.math3.distribution.RealDistribution;
 import org.apache.poi.ss.formula.functions.T;
+import org.omg.Dynamic.Parameter;
 import sun.misc.Signal;
+import org.apache.commons.math3.distribution.UniformRealDistribution;
+import org.apache.commons.math3.distribution.NormalDistribution;
 
 import java.sql.*;
 import java.util.*;
@@ -49,15 +53,15 @@ public class trafficInitialization {
 
     public static class VehicleAssignmentTmpStr{
         // This is the temporary structure during the vehicle assignment process
-        public VehicleAssignmentTmpStr(int _IdxQueuedVeh, int _IdxMovingVeh, List<SimVehicle> _VehicleAssigned,
-                                       double [][] _RearBoundaryByLane){
-            this.IdxQueuedVeh=_IdxQueuedVeh;
-            this.IdxMovingVeh=_IdxMovingVeh;
+        public VehicleAssignmentTmpStr(List<SimVehicle> _VehicleUnAssignedQueued, List<SimVehicle> _VehicleUnAssignedMoving,
+                                       List<SimVehicle> _VehicleAssigned, double [][] _RearBoundaryByLane){
+            this.VehicleUnAssignedQueued=_VehicleUnAssignedQueued;
+            this.VehicleUnAssignedMoving=_VehicleUnAssignedMoving;
             this.VehicleAssigned=_VehicleAssigned;
             this.RearBoundaryByLane=_RearBoundaryByLane;
         }
-        protected int IdxQueuedVeh; // Index of queue vehicles
-        protected int IdxMovingVeh; // Index of moving vehicles
+        protected List<SimVehicle> VehicleUnAssignedQueued; // List of unassigned queued vehicles
+        protected List<SimVehicle> VehicleUnAssignedMoving; // List of unassigned moving vehicles
         protected List<SimVehicle> VehicleAssigned; // List of vehicles assigned to a particular link and lane
         protected double [][] RearBoundaryByLane; // Rear boundary by lane at a given section
     }
@@ -108,6 +112,15 @@ public class trafficInitialization {
     //***************************************************************************************************************
 
     //*************** Vehicle Generation At Signalized Junction With Estimation *************************************
+
+    /**
+     *
+     * @param aimsunApproach AimsunApproach class
+     * @param estimationResults EstimationResults class
+     * @param ActiveControlPlans List<AimsunControlPlanJunction> class
+     * @param simulationStatistics SimulationStatistics class
+     * @return List<SimVehicle> class
+     */
     public static List<SimVehicle> VehicleGenerationForSignalizedJunctionWithEstimation(AimsunApproach aimsunApproach, EstimationResults estimationResults,
             List<AimsunControlPlanJunction> ActiveControlPlans,SimulationStatistics simulationStatistics){
         // This function is used to generate vehicles from queue estimation results
@@ -169,35 +182,33 @@ public class trafficInitialization {
 
             // Place vehicles to the correct links
             boolean AssignmentDone=false; // Indicator to see whether assignment is done or not
-            List<SimVehicle> tmpSimVehicleAll=null;
+            VehicleAssignmentTmpStr vehicleAssignmentTmpStr=new VehicleAssignmentTmpStr(null,null,
+                    null,null);
             for(int i=0;i<5;i++){
                 // Empirical adjustment
                 // This loop is used to adjust the gap for moving vehicles (Jam spacing, jam spacing*threshold]
                 // There may be more estimated vehicles than the link can handle, which sometimes requires to
                 // shorten the gaps between moving vehicles.
 
-                // Initialization of the list of vehicles
-                tmpSimVehicleAll=new ArrayList<SimVehicle>();
-                int IdxQueuedVeh=0;
-                int IdxMovingVeh=0;
+                // Initialization of the list of vehicles: RearBoundaryByLane is not updated yet
+                vehicleAssignmentTmpStr.VehicleUnAssignedQueued=VehWithODAndLaneQueued;
+                vehicleAssignmentTmpStr.VehicleUnAssignedMoving=VehWithODAndLaneMoving;
+                vehicleAssignmentTmpStr.VehicleAssigned=new ArrayList<SimVehicle>();
 
                 double Threshold=3-i*0.5;
                 for(int j=0;j<ListOfSections.size();j++){// Note: Sections are ordered from downstream to upstream
-                    VehicleAssignmentTmpStr vehicleAssignmentTmpStr=AssignVehicleToOneSection(EstimatedStates,VehWithODAndLaneQueued,VehWithODAndLaneMoving
-                            ,IdxQueuedVeh,IdxMovingVeh,aimsunApproach,simulationStatistics,j,Threshold,parameters);
-                    tmpSimVehicleAll.addAll(vehicleAssignmentTmpStr.VehicleAssigned);
+                    vehicleAssignmentTmpStr=AssignVehicleToOneSection(EstimatedStates,vehicleAssignmentTmpStr,aimsunApproach,
+                            simulationStatistics,j,Threshold,parameters);
 
-                    if(VehWithODAndLaneQueued.size()<=vehicleAssignmentTmpStr.IdxQueuedVeh+1 &&
-                            VehWithODAndLaneMoving.size()<=vehicleAssignmentTmpStr.IdxMovingVeh+1){
+                    if(vehicleAssignmentTmpStr.VehicleUnAssignedQueued.size()==0 &&
+                            vehicleAssignmentTmpStr.VehicleUnAssignedMoving.size()==0){
                         // If the assignment is done!
                         AssignmentDone=true;
                         break;
                     }else{ //If not, update the addresses
-                        IdxMovingVeh=vehicleAssignmentTmpStr.IdxMovingVeh;
-                        IdxQueuedVeh=vehicleAssignmentTmpStr.IdxQueuedVeh;
-
-                        if(j>0){// Not the first section
+                        if(j>0 && j<ListOfSections.size()-1){// Not the first section and not the last section
                             // Reassign link ID and lane ID
+                            vehicleAssignmentTmpStr=ReAssignedSectionAndLane(vehicleAssignmentTmpStr,aimsunApproach,j+1,simulationStatistics);
                         }
                     }
                 }
@@ -209,14 +220,144 @@ public class trafficInitialization {
                 System.out.println("Warning: there are still unassigned vehicles for Intersection:"+aimsunApproach.getJunctionID()+ " @ Section:"+
                         aimsunApproach.getFirstSectionID());
             }
-            simVehicleList.addAll(tmpSimVehicleAll);
+            simVehicleList.addAll(vehicleAssignmentTmpStr.VehicleAssigned);
         }
         return simVehicleList;
     }
 
-    public static VehicleAssignmentTmpStr AssignVehicleToOneSection(String[] Status,List<SimVehicle> VehWithODAndLaneQueued,List<SimVehicle>
-            VehWithODAndLaneMoving,int IdxQueuedVeh,int IdxMovingVeh,AimsunApproach aimsunApproach,SimulationStatistics simulationStatistics
-            , int SectionIdx,double Threshold,Parameters parameters){
+    /**
+     *
+     * @param vehicleAssignmentTmpStr VehicleAssignmentTmpStr class
+     * @param aimsunApproach AimsunApproach class
+     * @param NexSectionIdx Next Section Index
+     * @param simulationStatistics SimulationStatistics class
+     * @return VehicleAssignmentTmpStr class
+     */
+    public static VehicleAssignmentTmpStr ReAssignedSectionAndLane(VehicleAssignmentTmpStr vehicleAssignmentTmpStr,AimsunApproach aimsunApproach
+            ,int NexSectionIdx,SimulationStatistics simulationStatistics){
+        // This function is used to reassign section and lane to unassigned vehicles
+
+        int SectionID=aimsunApproach.getSectionBelongToApproach().getListOfSections().get(NexSectionIdx);
+        AimsunSection aimsunSection=aimsunApproach.getSectionBelongToApproach().getProperty().get(NexSectionIdx);
+        int NumLanes=aimsunSection.getNumLanes();
+        List<SimVehicle> VehicleUnAssignedQueued=vehicleAssignmentTmpStr.VehicleUnAssignedQueued;
+        List<SimVehicle> VehicleUnAssignedMoving=vehicleAssignmentTmpStr.VehicleUnAssignedMoving;
+
+        // Get next section's centroid statistics
+        CentroidStatistics centroidStatistics=null;
+        for(int i=0;i<simulationStatistics.getCentroidStatisticsList().size();i++){
+            if(simulationStatistics.getCentroidStatisticsList().get(i).getSectionID()==SectionID){
+                centroidStatistics=simulationStatistics.getCentroidStatisticsList().get(i);
+            }
+        }
+
+        // Assign section and lanes
+        Random random = new Random();
+        if(centroidStatistics.equals(null)){// No centroid statistics, Randomly assign lanes
+            // For queued vehicles first
+            for(int i=0;i<VehicleUnAssignedQueued.size();i++){
+                int LaneID=random.nextInt(NumLanes)+1;
+                VehicleUnAssignedQueued.get(i).LaneID=LaneID;
+                VehicleUnAssignedQueued.get(i).SectionID=SectionID;
+            }
+            // For moving vehicles next
+            for(int i=0;i<VehicleUnAssignedMoving.size();i++){
+                int LaneID=random.nextInt(NumLanes)+1;
+                VehicleUnAssignedMoving.get(i).LaneID=LaneID;
+                VehicleUnAssignedMoving.get(i).SectionID=SectionID;
+            }
+        }else{ // Have centroid statistics
+
+            Map<Integer,List<Integer>> LaneCentroidMap=GetCentroidLaneInformationFromCentroidStatistics(centroidStatistics);
+            // For queued vehicles first
+            for(int i=0;i<VehicleUnAssignedQueued.size();i++){ // Loop for each unassigned vehicle
+                int CentroidID=VehicleUnAssignedQueued.get(i).DestinationCentroid; // Get the destination centroid
+                int LaneID;
+                if(LaneCentroidMap.containsKey(CentroidID)){ // Find the right centroid?
+                    List<Integer> AvailableLanes=LaneCentroidMap.get(CentroidID);
+                    Collections.shuffle(AvailableLanes);// Redistribute the lanes
+                    LaneID=AvailableLanes.get(0); // Get the first value
+                }else{
+                    LaneID=random.nextInt(NumLanes)+1;
+                }
+                VehicleUnAssignedQueued.get(i).LaneID=LaneID;
+                VehicleUnAssignedQueued.get(i).SectionID=SectionID;
+            }
+            // For moving vehicles next
+            for(int i=0;i<VehicleUnAssignedMoving.size();i++){ // Loop for each unassigned vehicle
+                int CentroidID=VehicleUnAssignedMoving.get(i).DestinationCentroid; // Get the destination centroid
+                int LaneID;
+                if(LaneCentroidMap.containsKey(CentroidID)){ // Find the right centroid?
+                    List<Integer> AvailableLanes=LaneCentroidMap.get(CentroidID);
+                    Collections.shuffle(AvailableLanes);// Redistribute the lanes
+                    LaneID=AvailableLanes.get(0); // Get the first value
+                }else{
+                    LaneID=random.nextInt(NumLanes)+1;
+                }
+                VehicleUnAssignedMoving.get(i).LaneID=LaneID;
+                VehicleUnAssignedMoving.get(i).SectionID=SectionID;
+            }
+        }
+
+        // Update the information and return
+        vehicleAssignmentTmpStr.VehicleUnAssignedMoving=VehicleUnAssignedMoving;
+        vehicleAssignmentTmpStr.VehicleUnAssignedQueued=VehicleUnAssignedQueued;
+        return vehicleAssignmentTmpStr;
+    }
+
+
+    /**
+     *
+     * @param centroidStatistics CentroidStatistics class
+     * @return  Map<Integer,List<Integer>> LaneCentroidMap
+     */
+    public static Map<Integer,List<Integer>> GetCentroidLaneInformationFromCentroidStatistics(CentroidStatistics centroidStatistics){
+        // This function is used to get the lane-centroid information from centroid statistics
+
+        // Get the list of centroids
+        List<Integer> ListOfCentroids=new ArrayList<Integer>();
+        HashSet<Integer> UniqueCentroids=new HashSet<Integer>();
+        for(int i=0;i<centroidStatistics.getODList().size();i++){
+            if(UniqueCentroids.add(centroidStatistics.getODList().get(i)[1])){
+                ListOfCentroids.add(centroidStatistics.getODList().get(i)[1]);
+            }
+        }
+
+        // Get the centroid-lane mapping
+        Map<Integer,List<Integer>> LaneCentroidMap=new HashMap<Integer, List<Integer>>();
+        for(int i=0;i<ListOfCentroids.size();i++){ // Loop for each destination centorid
+            int CentroidID=ListOfCentroids.get(i);
+            List<Integer> AvailableLanes=new ArrayList<Integer>();
+            HashSet<Integer> uniqueLanes=new HashSet<Integer>();
+            List<ODByLane> ODByLaneList=centroidStatistics.getODListByLane();
+            for(int j=0;j<ODByLaneList.size();j++){ // For each lane
+                int LaneID=ODByLaneList.get(j).getLaneID(); // Get the lane IC
+                for(int k=0;k<ODByLaneList.get(j).getODList().size();k++){ // Loop for each OD pair [Origin, Destination, VehicleType]
+                    if(ODByLaneList.get(j).getODList().get(k)[1]==CentroidID){
+                        if(uniqueLanes.add(LaneID)){// Find a new lane?
+                            AvailableLanes.add(LaneID);
+                        }
+                    }
+                }
+            }
+            LaneCentroidMap.put(CentroidID,AvailableLanes);
+        }
+        return LaneCentroidMap;
+    }
+
+    /**
+     *
+     * @param Status Estimation status
+     * @param vehicleAssignmentTmpStr VehicleAssignmentTmpStr class
+     * @param aimsunApproach AimsunApproach class
+     * @param simulationStatistics SimulationStatistics class
+     * @param SectionIdx Section Index
+     * @param Threshold Vehicle assignment threshold
+     * @param parameters Parameters class
+     * @return VehicleAssignmentTmpStr class
+     */
+    public static VehicleAssignmentTmpStr AssignVehicleToOneSection(String[] Status,VehicleAssignmentTmpStr vehicleAssignmentTmpStr
+            ,AimsunApproach aimsunApproach,SimulationStatistics simulationStatistics, int SectionIdx,double Threshold,Parameters parameters){
         // This function is used to assign vehicles to one section
 
         // Get the indicator of RearBoundaryByLane for the give section
@@ -229,66 +370,583 @@ public class trafficInitialization {
             RearBoundaryByLane[i][1]=LaneLengths[i]; // Max rear boundary, i.e., max lane length
             RearBoundaryByLane[i][2]=0; // Current rear boundary=0
         }
-        // Initialization
-        List<SimVehicle> tmpSimVehicle=new ArrayList<SimVehicle>(); // Empty set
-        VehicleAssignmentTmpStr vehicleAssignmentTmpStr=new  VehicleAssignmentTmpStr(IdxQueuedVeh,IdxMovingVeh,tmpSimVehicle,RearBoundaryByLane);
+        // Update RearBoundaryByLane according to Status for the most downstream section (the first section)
+        if(SectionIdx==0){// The first downstream section
+             RearBoundaryByLane=ReAdjustRearBoundaryWithState(RearBoundaryByLane, Status, aimsunApproach,parameters);
+        }
+        vehicleAssignmentTmpStr.RearBoundaryByLane=RearBoundaryByLane; // Update the RearBoundaryByLane
 
         // Assign positions and speeds for queued vehicles
-        vehicleAssignmentTmpStr=AssignVehicleToOneSectionForGivenVehicleCategory(Status,vehicleAssignmentTmpStr
-                , VehWithODAndLaneQueued,"Queued", parameters,simulationStatistics,Threshold, aimsunApproach,SectionID);
+        vehicleAssignmentTmpStr=AssignVehicleToOneSectionForGivenVehicleCategory(vehicleAssignmentTmpStr
+                ,"Queued", parameters,simulationStatistics,Threshold, aimsunApproach,SectionID);
 
         // Assign positions and speeds for moving vehicles
-        vehicleAssignmentTmpStr=AssignVehicleToOneSectionForGivenVehicleCategory(Status,vehicleAssignmentTmpStr
-                , VehWithODAndLaneMoving,"Moving", parameters,simulationStatistics,Threshold, aimsunApproach,SectionID);
+        vehicleAssignmentTmpStr=AssignVehicleToOneSectionForGivenVehicleCategory(vehicleAssignmentTmpStr
+                , "Moving", parameters,simulationStatistics,Threshold, aimsunApproach,SectionID);
 
         return vehicleAssignmentTmpStr;
     }
 
-    public static VehicleAssignmentTmpStr AssignVehicleToOneSectionForGivenVehicleCategory(String[] Status,VehicleAssignmentTmpStr vehicleAssignmentTmpStr
-            ,List<SimVehicle> VehWithODAndLane,String Catetory,Parameters parameters,SimulationStatistics simulationStatistics,double Threshold
-            , AimsunApproach aimsunApproach,int SectionID){
+    /**
+     *
+     * @param RearBoundaryByLane double [][]
+     * @param Status String[] Estimated traffic states
+     * @param aimsunApproach AimsunApproach class
+     * @param parameters Parameters class
+     * @return double [][] RearBoundaryByLane
+     */
+    public static double[][] ReAdjustRearBoundaryWithState(double [][] RearBoundaryByLane, String[] Status, AimsunApproach aimsunApproach,
+                                                           Parameters parameters){
+        // This function is used to adjust the rear boundaries according to the estimated traffic states, particularly for left turns and right turns
+
+        for(int i=0;i<Status.length;i++){ // Loop for each turning movement
+            if(Status[i].contains("Lane Blockage")){// If we find lane blockage
+                // get the lane-turning property
+                List<LaneTurningProperty> laneTurningPropertyList=aimsunApproach.getLaneTurningProperty();
+                int FirstSectionID=aimsunApproach.getFirstSectionID();
+                LaneTurningProperty laneTurningProperty=null;
+                for(int j=0;j<laneTurningPropertyList.size();j++){
+                    if(laneTurningPropertyList.get(j).getSectionID()==FirstSectionID){
+                        laneTurningProperty=laneTurningPropertyList.get(j);
+                        break;
+                    }
+                }
+
+                // Get the aimsun turning property
+                List<AimsunTurning> aimsunTurningList=aimsunApproach.getTurningBelongToApproach().getTurningProperty();
+
+                // Get the movement information
+                String Movement="";
+                if(i==0){
+                    Movement="Left Turn";
+                }else if(i==1){
+                    Movement="Through";
+                }else if(i==2){
+                    Movement="Right Turn";
+                }
+
+                // Adjust the rear boundary condition
+                for(int j=0;j<laneTurningProperty.getLanes().size();j++){// Loop for each lane
+                    if(laneTurningProperty.getLanes().get(j).getIsExclusive()==1){// If it is exclusive lane
+                        int TurnID=laneTurningProperty.getLanes().get(j).getTurningMovements().get(0);// Get the turn ID
+                        int LaneID=laneTurningProperty.getLanes().get(j).getLaneID(); // Get the lane ID
+                        for(int k=0;k<aimsunTurningList.size();k++){ // Try to find the turn movement information
+                            if(aimsunTurningList.get(k).getTurnID()==TurnID){
+                                if(aimsunTurningList.get(k).getMovement().contains(Movement)){// Get the right turn with given movement
+                                    double DistanceToStopbar=GetDistanceToStopbar(aimsunApproach,parameters); // Get the distance to stopbar
+                                    RearBoundaryByLane[LaneID-1][2]=DistanceToStopbar; // Adjust the rear boundary
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return RearBoundaryByLane;
+    }
+
+    /**
+     *
+     * @param vehicleAssignmentTmpStr VehicleAssignmentTmpStr class
+     * @param Category Queued or Moving
+     * @param parameters Parameters class
+     * @param simulationStatistics SimulationStatistics class
+     * @param Threshold Vehicle assignment threshold
+     * @param aimsunApproach AimsunApproach class
+     * @param SectionID Section ID
+     * @return VehicleAssignmentTmpStr class
+     */
+    public static VehicleAssignmentTmpStr AssignVehicleToOneSectionForGivenVehicleCategory(VehicleAssignmentTmpStr vehicleAssignmentTmpStr
+            ,String Category,Parameters parameters,SimulationStatistics simulationStatistics,double Threshold, AimsunApproach aimsunApproach
+            ,int SectionID){
         // This function is used to assign vehicle to one section for the given vehicle categority: queued or moving
 
         // Initialization
-        int Idx=-1;
-        if(Catetory.equals("Queued")){
-            Idx=vehicleAssignmentTmpStr.IdxQueuedVeh;
-        }else if(Catetory.equals("Moving")){
-            Idx=vehicleAssignmentTmpStr.IdxMovingVeh;
+        List<SimVehicle> tmpSimVehicleUnassign=null;
+        if(Category.equals("Queued")){
+            tmpSimVehicleUnassign=vehicleAssignmentTmpStr.VehicleUnAssignedQueued;
+        }else if(Category.equals("Moving")){
+            tmpSimVehicleUnassign=vehicleAssignmentTmpStr.VehicleUnAssignedMoving;
         }else{
             System.out.println("Error in vehicle catetory: neither Queued nor Moving!");
             System.exit(-1);
         }
         double[][] RearBoundaryByLane=vehicleAssignmentTmpStr.RearBoundaryByLane;
-        List<SimVehicle> tmpSimVehicle=vehicleAssignmentTmpStr.VehicleAssigned;
-
-        // Assign vehicles for given category
-        int NumOfLanes=RearBoundaryByLane.length;
-        int VehicleType=0; // Vehicle Type=0 means the statistics for all vehicles, just want to make it simple; Can be overwritten in the future
-        for(int i=0;i<NumOfLanes;i++){
-            int LaneID=i+1;
-            LaneStatistics laneStatistics=GetLaneInSectionStatistics(simulationStatistics,SectionID, LaneID,VehicleType);
+        List<SimVehicle> tmpSimVehicleAssign=vehicleAssignmentTmpStr.VehicleAssigned;
+        double LinkLength=aimsunApproach.getGeoDesign().getLinkLength();
+        List<Integer> ListOfSections=aimsunApproach.getSectionBelongToApproach().getListOfSections();
+        AimsunSection aimsunSection=null;
+        for(int i=0;i<ListOfSections.size();i++){
+            if(ListOfSections.get(i)==SectionID){
+                aimsunSection=aimsunApproach.getSectionBelongToApproach().getProperty().get(i);
+                break;
+            }
         }
 
+        if(tmpSimVehicleUnassign.size()>0) {// If the unassigned list is not empty
 
-        // Update information and return
-        if(Catetory.equals("Queued")){
-            vehicleAssignmentTmpStr.IdxQueuedVeh=Idx;
-        }else if(Catetory.equals("Moving")){
-            vehicleAssignmentTmpStr.IdxMovingVeh=Idx;
+            List<SimVehicle> removeSimVehicles=new ArrayList<SimVehicle>(); // Temporarily store the vehicles just assigned to the network
+
+            // Get the lane-centroid map
+            Map<Integer,List<Integer>> LaneCentroidMap=GetCentroidLaneInformationFromSimVehicle(tmpSimVehicleUnassign);
+
+            // Get lane statistics
+            int NumOfLanes = RearBoundaryByLane.length;
+            int VehicleType = 0; // Vehicle Type=0 means the statistics for all vehicles, just want to make it simple; Can be overwritten in the future
+            Map<Integer,LaneStatistics> LaneStatisticsMap=new HashMap<Integer, LaneStatistics>();
+            for(int i=0;i<NumOfLanes;i++){
+                LaneStatistics tmpLaneStatistics = GetLaneInSectionStatistics(simulationStatistics, SectionID, i+1, VehicleType);
+                LaneStatisticsMap.put(i+1,tmpLaneStatistics);
+            }
+
+            //****************Level 1 assignment: assign vehicles to their predefined lanes********************
+            for (int i = 0; i < NumOfLanes; i++) { // loop for each lane
+                int LaneID = i + 1;
+                // Get the list of simulation vehicles by lane
+                List<SimVehicle> simVehiclesByLane = SelectVehicleByLane(tmpSimVehicleUnassign, LaneID);
+
+                if (simVehiclesByLane.size() > 0) {// If is not empty
+                    // Get the lane statistics
+                    LaneStatistics laneStatistics = LaneStatisticsMap.get(i+1);
+                    // Loop for each vehicles
+                    for (int j = 0; j < simVehiclesByLane.size(); j++) {
+                        double[] SpacingAndSpeed = GetSpacingAndSpeed(laneStatistics, Category, parameters, Threshold); // Spacing & Speed
+
+                        if (RearBoundaryByLane[i][1] < RearBoundaryByLane[i][2]+SpacingAndSpeed[0]/2) {
+                            // Reach the upstream boundary of the given lane "i"
+                            break; // Do not assign vehicles
+                        } else {
+                            // Generate a new vehicle
+                            double InitialPosition = LinkLength - RearBoundaryByLane[i][2] - SpacingAndSpeed[0] / 2;
+                            double Speed = SpacingAndSpeed[1];
+                            SimVehicle simVehicle = new SimVehicle(simVehiclesByLane.get(j).SectionID, simVehiclesByLane.get(j).LaneID,
+                                    simVehiclesByLane.get(j).VehicleTypeInAimsun, simVehiclesByLane.get(j).OriginCentroid, simVehiclesByLane.get(j).DestinationCentroid,
+                                    InitialPosition, Speed, simVehiclesByLane.get(j).TrackOrNot);
+                            // Add the new vehicle to the assigned list
+                            tmpSimVehicleAssign.add(simVehicle);
+                            // Update the rear boundary
+                            RearBoundaryByLane[i][2] = RearBoundaryByLane[i][2] + SpacingAndSpeed[0];
+                            // Remove the vehicle from the unassigned list
+                            removeSimVehicles.add(simVehiclesByLane.get(j));
+                        }
+                    }
+                }
+            }
+            // Remove all vehicles that have been assigned
+            tmpSimVehicleUnassign.removeAll(removeSimVehicles);
+
+            //****************Level 2 assignment: assign vehicles to the lanes with the same Destination********************
+            if(tmpSimVehicleUnassign.size()>0){ // Still have unassigned vehicles
+
+                removeSimVehicles=new ArrayList<SimVehicle>(); // Temporarily store the vehicles just assigned to the network
+
+                // Redistribute the unassigned vehicles
+                Collections.shuffle(tmpSimVehicleUnassign);
+
+                for(int i=0;i<tmpSimVehicleUnassign.size();i++){// Loop for each unassigned vehicle
+                    int CentroidID=tmpSimVehicleUnassign.get(i).DestinationCentroid; // Get the centroid ID
+                    List<Integer> AvailableLanes=GetAvailableLanesForGivenCentroid(LaneCentroidMap,RearBoundaryByLane,CentroidID,parameters);
+                    Collections.shuffle(AvailableLanes);// Redistribute the available lanes
+
+                    if(AvailableLanes.size()>0){// Still have available lanes to assign vehicles
+                        for(int j=0;j<AvailableLanes.size();j++){ // Loop for each available lane
+                            int LaneID=AvailableLanes.get(j); // Get the lane ID
+                            LaneStatistics laneStatistics = LaneStatisticsMap.get(LaneID); // Get the lane statistics
+                            double[] SpacingAndSpeed = GetSpacingAndSpeed(laneStatistics, Category, parameters, Threshold); // Spacing & Speed
+
+                            if(RearBoundaryByLane[LaneID-1][2]+SpacingAndSpeed[0]/2<=RearBoundaryByLane[LaneID-1][1])// Have enough space to add
+                            {
+                                // Generate a new vehicle
+                                double InitialPosition = LinkLength - RearBoundaryByLane[LaneID - 1][2] - SpacingAndSpeed[0] / 2;
+                                double Speed = SpacingAndSpeed[1];
+
+                                // New vehicle with a new lane ID
+                                SimVehicle simVehicle = new SimVehicle(tmpSimVehicleUnassign.get(i).SectionID, LaneID,
+                                        tmpSimVehicleUnassign.get(i).VehicleTypeInAimsun, tmpSimVehicleUnassign.get(i).OriginCentroid,
+                                        tmpSimVehicleUnassign.get(i).DestinationCentroid, InitialPosition, Speed, tmpSimVehicleUnassign.get(i).TrackOrNot);
+                                // Add the new vehicle to the assigned list
+                                tmpSimVehicleAssign.add(simVehicle);
+                                // Update the rear boundary
+                                RearBoundaryByLane[LaneID-1][2] = RearBoundaryByLane[LaneID-1][2] + SpacingAndSpeed[0];
+                                // Remove the vehicle from the unassigned list
+                                removeSimVehicles.add(tmpSimVehicleUnassign.get(i));
+                                break; // Succeed, then break the loop for Available Lanes
+                            }
+                        }
+                    }
+                }
+            }
+            tmpSimVehicleUnassign.removeAll(removeSimVehicles);
+
+            //****************Level 3 assignment: assign vehicles to adjacent lanes ******************************************
+            if(tmpSimVehicleUnassign.size()>0) { // Still have unassigned vehicles
+
+                removeSimVehicles=new ArrayList<SimVehicle>();
+
+                // Redistribute the unassigned vehicles
+                Collections.shuffle(tmpSimVehicleUnassign);
+
+                // It is important to adjust the rear boundaries for level-3 and level-4 assignment for the most downstream link
+                RearBoundaryByLane=ReAdjustRearBoundaryForAssignment(RearBoundaryByLane,aimsunApproach,parameters,SectionID);
+
+                for(int i=0;i<tmpSimVehicleUnassign.size();i++){ // Loop for each unassigned vehicle
+                    int LaneID = tmpSimVehicleUnassign.get(i).LaneID;
+                    List<Integer> AvailableAdjacentLanes=GetAvailableAdjacentLanesForGivenLane(RearBoundaryByLane,parameters, LaneID);
+                    Collections.shuffle(AvailableAdjacentLanes); // Redistribute the available adjacent lanes
+
+                    if(AvailableAdjacentLanes.size()>0){
+                        // Adjacent lanes are available
+                        for(int j=0;j<AvailableAdjacentLanes.size();j++){ // Loop for each available lane
+                            LaneID=AvailableAdjacentLanes.get(j); // Get the lane ID
+                            LaneStatistics laneStatistics = LaneStatisticsMap.get(LaneID); // Get the lane statistics
+                            double[] SpacingAndSpeed = GetSpacingAndSpeed(laneStatistics, Category, parameters, Threshold); // Spacing & Speed
+
+                            if(RearBoundaryByLane[LaneID-1][2]+SpacingAndSpeed[0]/2<=RearBoundaryByLane[LaneID-1][1])// Have enough space to add
+                            {
+                                // Generate a new vehicle
+                                double InitialPosition = LinkLength - RearBoundaryByLane[LaneID - 1][2] - SpacingAndSpeed[0] / 2;
+                                double Speed = SpacingAndSpeed[1];
+
+                                // New vehicle with a new lane ID
+                                SimVehicle simVehicle = new SimVehicle(tmpSimVehicleUnassign.get(i).SectionID, LaneID,
+                                        tmpSimVehicleUnassign.get(i).VehicleTypeInAimsun, tmpSimVehicleUnassign.get(i).OriginCentroid,
+                                        tmpSimVehicleUnassign.get(i).DestinationCentroid, InitialPosition, Speed, tmpSimVehicleUnassign.get(i).TrackOrNot);
+                                // Add the new vehicle to the assigned list
+                                tmpSimVehicleAssign.add(simVehicle);
+                                // Update the rear boundary
+                                RearBoundaryByLane[LaneID-1][2] = RearBoundaryByLane[LaneID-1][2] + SpacingAndSpeed[0];
+                                // Remove the vehicle from the unassigned list
+                                removeSimVehicles.add(tmpSimVehicleUnassign.get(i));
+                                break; // Succeed, then break the loop for Available Lanes
+                            }
+                        }
+                    }
+                }
+            }
+            tmpSimVehicleUnassign.removeAll(removeSimVehicles);
+
+            //****************Level 4 assignment: assign vehicles to available full lanes ******************************************
+            if(tmpSimVehicleUnassign.size()>0){ // Still have unassigned vehicles
+                removeSimVehicles=new ArrayList<SimVehicle>();
+
+                List<Integer> AvailableFullLanes=GetAvailableFullLanes(RearBoundaryByLane,parameters, aimsunSection);
+                if(AvailableFullLanes.size()>0){
+                    for(int i=0;i<tmpSimVehicleUnassign.size();i++){
+                        // Shuffle the available full lanes
+                        Collections.shuffle(AvailableFullLanes);
+
+                        for(int j=0;j<AvailableFullLanes.size();j++){ // Loop for each available lane
+                            int LaneID=AvailableFullLanes.get(j); // Get the lane ID
+                            LaneStatistics laneStatistics = LaneStatisticsMap.get(LaneID); // Get the lane statistics
+                            double[] SpacingAndSpeed = GetSpacingAndSpeed(laneStatistics, Category, parameters, Threshold); // Spacing & Speed
+
+                            if(RearBoundaryByLane[LaneID-1][2]+SpacingAndSpeed[0]/2<=RearBoundaryByLane[LaneID-1][1])// Have enough space to add
+                            {
+                                // Generate a new vehicle
+                                double InitialPosition = LinkLength - RearBoundaryByLane[LaneID - 1][2] - SpacingAndSpeed[0] / 2;
+                                double Speed = SpacingAndSpeed[1];
+
+                                // New vehicle with a new lane ID
+                                SimVehicle simVehicle = new SimVehicle(tmpSimVehicleUnassign.get(i).SectionID, LaneID,
+                                        tmpSimVehicleUnassign.get(i).VehicleTypeInAimsun, tmpSimVehicleUnassign.get(i).OriginCentroid,
+                                        tmpSimVehicleUnassign.get(i).DestinationCentroid, InitialPosition, Speed, tmpSimVehicleUnassign.get(i).TrackOrNot);
+                                // Add the new vehicle to the assigned list
+                                tmpSimVehicleAssign.add(simVehicle);
+                                // Update the rear boundary
+                                RearBoundaryByLane[LaneID-1][2] = RearBoundaryByLane[LaneID-1][2] + SpacingAndSpeed[0];
+                                // Remove the vehicle from the unassigned list
+                                removeSimVehicles.add(tmpSimVehicleUnassign.get(i));
+                                break; // Succeed, then break the loop for Available Lanes
+                            }
+                        }
+                    }
+                }
+            }
+            tmpSimVehicleUnassign.removeAll(removeSimVehicles);
+
+            //****************Finally, update everything!******************************************
+            // Update information and return
+            if (Category.equals("Queued")) {
+                vehicleAssignmentTmpStr.VehicleUnAssignedQueued = tmpSimVehicleUnassign;
+            } else if (Category.equals("Moving")) {
+                vehicleAssignmentTmpStr.VehicleUnAssignedMoving = tmpSimVehicleUnassign;
+            }
+            vehicleAssignmentTmpStr.VehicleAssigned = tmpSimVehicleAssign;
+            vehicleAssignmentTmpStr.RearBoundaryByLane = RearBoundaryByLane;
         }
-        vehicleAssignmentTmpStr.VehicleAssigned=tmpSimVehicle;
-        vehicleAssignmentTmpStr.RearBoundaryByLane=RearBoundaryByLane;
         return vehicleAssignmentTmpStr;
     }
 
+    /**
+     *
+     * @param RearBoundaryByLane double[][]
+     * @param aimsunApproach AimsunApproach class
+     * @param parameters Parameters class
+     * @param SectionID Section ID
+     * @return double[][] RearBoundaryByLane (Updated one)
+     */
+    public static double[][] ReAdjustRearBoundaryForAssignment(double[][] RearBoundaryByLane,AimsunApproach aimsunApproach,Parameters parameters, int SectionID){
+        // This function is used to adjust rear boundaries if the section is the most downstream one
+        // It is necessary in the level-3 and level 4 assignment: not to assign vehicles within region from stopbar to advance detectors
+        if(SectionID==aimsunApproach.getFirstSectionID()){
+            // Need to adjust the rear boundaries
 
+            // Get the distance to stopbar
+            double DistanceToStopbar=GetDistanceToStopbar(aimsunApproach,parameters);
+
+            // Get the full-lane indicator
+            int[] IsFullLane=aimsunApproach.getSectionBelongToApproach().getProperty().get(0).getIsFullLane(); // The first section
+
+            // Adjust the rear boundaries
+            for(int i=0;i<IsFullLane.length;i++){ // Loop for each lane
+                if(IsFullLane[i]==1){// Is full lane?
+                    RearBoundaryByLane[i][2]=Math.max(RearBoundaryByLane[i][2],DistanceToStopbar);// Get the maximum boundary
+                }
+            }
+        }
+        return RearBoundaryByLane;
+    }
+
+    /**
+     *
+     * @param aimsunApproach AimsunApproach class
+     * @param parameters Parameters class
+     * @return DistanceToStopbar
+     */
+    public static double GetDistanceToStopbar(AimsunApproach aimsunApproach,Parameters parameters){
+        // This function is used to get distance to the stopbar
+
+        // Get the distance to stopbar
+        List<DetectorMovementProperty> AdvanceDetectors=aimsunApproach.getDetectorProperty().getAdvanceDetectors();
+        double DistanceToStopbar=0;
+        if(AdvanceDetectors.size()>0){ // If advance detectors exist
+            // Have advance detectors
+            for(int i=0;i<AdvanceDetectors.size();i++){// Loop for each detector type
+                for(int j=0;j<AdvanceDetectors.get(i).getDistancesToStopbar().size();j++){ // Loop for each detector with the same type
+                    if(DistanceToStopbar<AdvanceDetectors.get(i).getDistancesToStopbar().get(j)){
+                        DistanceToStopbar=AdvanceDetectors.get(i).getDistancesToStopbar().get(j);// Get the maximum distance
+                    }
+                }
+            }
+        }
+        if(DistanceToStopbar==0){// If not found
+            // Adjust distance to stopbar according to the default value and the section length
+            double[] LaneLengths=aimsunApproach.getSectionBelongToApproach().getProperty().get(0).getLaneLengths();
+            Arrays.sort(LaneLengths);
+            double SectionLength=LaneLengths[LaneLengths.length-1]; // Get the last one (maximum)
+            DistanceToStopbar=Math.min(parameters.intersectionParams.DistanceAdvanceDetector,SectionLength);
+        }
+
+        return DistanceToStopbar;
+    }
+
+    /**
+     *
+     * @param RearBoundaryByLane double[][]
+     * @param parameters Parameters class
+     * @param aimsunSection AimsunSection class
+     * @return List<Integer> AvailableFullLanes
+     */
+    public static List<Integer> GetAvailableFullLanes(double[][] RearBoundaryByLane,Parameters parameters, AimsunSection aimsunSection){
+        // This function is used to get available full lanes
+        List<Integer> AvailableFullLanes=new ArrayList<Integer>();
+
+        int[] IsFullLane=aimsunSection.getIsFullLane(); // Get the full-lane indicator
+        for(int i=0;i<IsFullLane.length;i++){// Loop for each lane
+            if(RearBoundaryByLane[i][1]>=RearBoundaryByLane[i][2]+parameters.getVehicleParams().getJamSpacing()){ // Still have space
+                if(IsFullLane[i]==1){// Is a full lane
+                    AvailableFullLanes.add(i+1); // Append it to the end
+                }
+            }
+        }
+        return AvailableFullLanes;
+    }
+
+    /**
+     *
+     * @param RearBoundaryByLane double[][]
+     * @param parameters Parameter class
+     * @param LaneID Lane ID
+     * @return List<Integer> AvailableAdjacentLanes
+     */
+    public static List<Integer> GetAvailableAdjacentLanesForGivenLane(double[][] RearBoundaryByLane,Parameters parameters, int LaneID){
+        // This function is to find available adjacent lanes for a given lane
+        List<Integer> AvailableAdjacentLanes=new ArrayList<Integer>();
+
+        int StartLane=Math.max(LaneID-1,0); // Adjacent lane on the left
+        int Numlanes=RearBoundaryByLane.length;
+        int EndLane=Math.min(Numlanes-1,LaneID); // Adjacent lane on the right
+
+        for(int i=StartLane;i<=EndLane;i++){
+            if(RearBoundaryByLane[i][1]>=RearBoundaryByLane[i][2]+parameters.getVehicleParams().getJamSpacing()){
+                // Still able to add vehicles
+                AvailableAdjacentLanes.add(i+1); // Add the lane ID
+            }
+        }
+        return AvailableAdjacentLanes;
+    }
+
+    /**
+     *
+     * @param LaneCentroidMap Map<Integer,List<Integer>>
+     * @param RearBoundaryByLane double[][]
+     * @param CentroidID Destination centroid ID
+     * @param parameters Parameters class
+     * @return List<Integer> AvailableLanes (that can accommodate new vehicles)
+     */
+    public static List<Integer> GetAvailableLanesForGivenCentroid(Map<Integer,List<Integer>> LaneCentroidMap, double[][] RearBoundaryByLane
+            ,int CentroidID,Parameters parameters){
+        // This function is used to get available lanes for a given centorid
+
+        List<Integer> AvailableLanes=new ArrayList<Integer>();
+
+        List<Integer> Lanes=LaneCentroidMap.get(CentroidID); // Get the lane information for the given centroid
+        for(int i=0;i<Lanes.size();i++){ // Loop for each lane
+            if(RearBoundaryByLane[Lanes.get(i)-1][1]>RearBoundaryByLane[Lanes.get(i)-1][2]+parameters.vehicleParams.getJamSpacing()){
+                // Still can assign a least one vehicle?
+                AvailableLanes.add(Lanes.get(i));
+            }
+        }
+        return AvailableLanes;
+    }
+
+    /**
+     *
+     * @param simVehicleList List<SimVehicle> class
+     * @return Map<Integer,List<Integer>> LaneCentroidMap
+     */
+    public static Map<Integer,List<Integer>> GetCentroidLaneInformationFromSimVehicle(List<SimVehicle> simVehicleList){
+        // This function is used to get the lane-centroid information from sim-vehicles
+
+        // Get the list of centroids (destination)
+        List<Integer> ListOfCentroids=GetListOfDestinationsFromSimVehicles(simVehicleList);
+
+        Map<Integer,List<Integer>> LaneCentroidMap=new HashMap<Integer, List<Integer>>();
+        for(int i=0;i<ListOfCentroids.size();i++){ // Loop for each destination centorid
+            int CentroidID=ListOfCentroids.get(i);
+            List<Integer> AvailableLanes=new ArrayList<Integer>();
+            HashSet<Integer> uniqueLanes=new HashSet<Integer>();
+            for(int j=0;j<simVehicleList.size();j++){ // Get the associated lanes
+                if(simVehicleList.get(j).DestinationCentroid==CentroidID && uniqueLanes.add(simVehicleList.get(j).LaneID)){
+                    AvailableLanes.add(simVehicleList.get(j).LaneID);
+                }
+            }
+            LaneCentroidMap.put(CentroidID,AvailableLanes);
+        }
+        return LaneCentroidMap;
+    }
+
+    /**
+     *
+     * @param simVehicleList List<SimVehicle> class
+     * @return List<Integer> destinationList
+     */
+    public static List<Integer> GetListOfDestinationsFromSimVehicles(List<SimVehicle> simVehicleList){
+        // This function is used to get the list of desinations from the given Sim-Vehicles
+
+        List<Integer> destinationList=new ArrayList<Integer>();
+        HashSet<Integer> uniqueDestination=new HashSet<Integer>();
+        for(int i=0;i<simVehicleList.size();i++){
+            if(uniqueDestination.add(simVehicleList.get(i).DestinationCentroid)){
+                destinationList.add(simVehicleList.get(i).DestinationCentroid);
+            }
+        }
+        return destinationList;
+    }
+
+    /**
+     *
+     * @param laneStatistics LaneStatistics class
+     * @param Category Queued or Moving
+     * @param parameters Parameter class
+     * @param Threshold Spacing threshold
+     * @return double [Spacing, Speed]
+     */
+    public static double [] GetSpacingAndSpeed(LaneStatistics laneStatistics, String Category,Parameters parameters, double Threshold){
+        // This function is used to get spacing and speed for given category
+
+        double Spacing=0;
+        double Speed=0;
+        double JamSpacing=parameters.vehicleParams.JamSpacing;
+        if(Category.equals("Queued")){// For queued vehicles
+            Speed=0;
+            Spacing=JamSpacing;
+        }else if(Category.equals("Moving")){ // For moving vehicles
+            // Spacing is uniformly selected between JamSpacing and JamSpacing*Threshold
+            RealDistribution rnd=new UniformRealDistribution(JamSpacing,JamSpacing*Threshold);
+            Spacing=rnd.sample();
+
+            if(laneStatistics.getLaneSpeed()>=0 && laneStatistics.getLaneSpeedStd()>=0) { // If lane speed and speed std are available
+                NormalDistribution rnd2 = new NormalDistribution(laneStatistics.getLaneSpeed(), laneStatistics.getLaneSpeedStd());
+                Speed=rnd2.sample();
+            }else{ // If not availalbe
+                Random random = new Random();
+                Speed=parameters.intersectionParams.SaturationSpeedThrough*random.nextFloat(); // Ramdomly select between 0 and Saturation Speed For Through Vehicles
+            }
+        }else{
+            System.out.println("Unknown vehicle category: neither Queued nor Moving!");
+            System.exit(-1);
+        }
+        return new double[]{Spacing, Speed};
+    }
+
+    /**
+     *
+     * @param simVehicleList List<SimVehicle> class
+     * @param LaneID Lane ID
+     * @return List<SimVehicle>
+     */
+    public static List<SimVehicle> SelectVehicleByLane(List<SimVehicle> simVehicleList, int LaneID){
+        // This function is used to select vehicles by lane ID
+        List<SimVehicle> tmpSimVehicle=new ArrayList<SimVehicle>();
+
+        for(int i=0;i<simVehicleList.size();i++){
+            if(simVehicleList.get(i).LaneID==LaneID){
+                tmpSimVehicle.add(simVehicleList.get(i));
+            }
+        }
+        return tmpSimVehicle;
+    }
+
+    /**
+     *
+     * @param simulationStatistics SimulationStatistics class
+     * @param SectionID Section ID
+     * @param LaneID Lane ID
+     * @param VehicleType Vehicle Type
+     * @return LaneStatistics class
+     */
     public static LaneStatistics GetLaneInSectionStatistics(SimulationStatistics simulationStatistics, int SectionID, int LaneID, int VehicleType){
         // This function is used to get lane statistics for a given section and lane.
+
         LaneStatistics laneStatistics=null;
+        List<LaneStatistics> laneStatisticsList;
+        List<LaneStatisticsByObjectID> laneStatisticsByObjectIDList=simulationStatistics.getLaneStatisticsByObjectIDList();
+        if(laneStatisticsByObjectIDList.size()>1){
+            // More than one object inside the sqlite database
+            long LatestExecDateTime=laneStatisticsByObjectIDList.get(0).getExecDateTime();
+            int Index=0;
+            for(int i=1;i<laneStatisticsByObjectIDList.size();i++){
+                if(LatestExecDateTime<laneStatisticsByObjectIDList.get(i).getExecDateTime()){
+                    // Find the latest one?
+                    LatestExecDateTime=laneStatisticsByObjectIDList.get(i).getExecDateTime();
+                    Index=i; // Update the index
+                }
+            }
+            laneStatisticsList=laneStatisticsByObjectIDList.get(Index).getLaneStatisticsList();// Return the latest simulation information
+        }else{// Only one object inside the sqlite database
+            laneStatisticsList=laneStatisticsByObjectIDList.get(0).getLaneStatisticsList();
+        }
 
-        //List<LaneStatistics> laneStatisticsList=simulationStatistics.getLaneStatisticsByObjectIDList()
-
+        // Loop for the right lane statistics
+        for(int i=0;i<laneStatisticsList.size();i++){
+            if(laneStatisticsList.get(i).getSectionID()==SectionID && laneStatisticsList.get(i).getLaneID()==LaneID &&
+                    laneStatisticsList.get(i).getVehicleType()==VehicleType){
+                laneStatistics=laneStatisticsList.get(i);
+                break;
+            }
+        }
         return laneStatistics;
     }
 

@@ -416,6 +416,10 @@ public class readFromAimsun {
         public int getNumLanes() {
             return NumLanes;
         }
+
+        public int[] getIsFullLane() {
+            return IsFullLane;
+        }
     }
 
 

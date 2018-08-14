@@ -299,6 +299,34 @@ public class getSimulationData {
         protected double LaneFlowStd;
         protected double LaneSpeed;
         protected double LaneSpeedStd;
+
+        public int getSectionID() {
+            return SectionID;
+        }
+
+        public int getLaneID() {
+            return LaneID;
+        }
+
+        public int getVehicleType() {
+            return VehicleType;
+        }
+
+        public double getLaneFlow() {
+            return LaneFlow;
+        }
+
+        public double getLaneFlowStd() {
+            return LaneFlowStd;
+        }
+
+        public double getLaneSpeed() {
+            return LaneSpeed;
+        }
+
+        public double getLaneSpeedStd() {
+            return LaneSpeedStd;
+        }
     }
 
     public static class LaneStatisticsByObjectID{
@@ -318,6 +346,14 @@ public class getSimulationData {
         protected int Interval;
         protected long ExecDateTime;
         protected List<LaneStatistics> laneStatisticsList;
+
+        public List<LaneStatistics> getLaneStatisticsList() {
+            return laneStatisticsList;
+        }
+
+        public long getExecDateTime() {
+            return ExecDateTime;
+        }
     }
 
     /**

@@ -121,6 +121,10 @@ public class reconstructNetwork {
         public String getFirstSectionName() {
             return FirstSectionName;
         }
+
+        public List<LaneTurningProperty> getLaneTurningProperty() {
+            return laneTurningProperty;
+        }
     }
 
     //*************************************Detector Property********************************
@@ -252,6 +256,14 @@ public class reconstructNetwork {
         protected int SectionID;
         protected int NumLanes;
         protected List<LaneProperty> Lanes; // Lane properties
+
+        public List<LaneProperty> getLanes() {
+            return Lanes;
+        }
+
+        public int getSectionID() {
+            return SectionID;
+        }
     }
 
     public static class LaneProperty{
@@ -268,6 +280,18 @@ public class reconstructNetwork {
         protected List<Integer> TurningMovements; // Turning movements on the lane
         protected List<Double> Proportions; // Proportions of the turning movements on the lane
         protected double Length;
+
+        public int getLaneID() {
+            return LaneID;
+        }
+
+        public int getIsExclusive() {
+            return IsExclusive;
+        }
+
+        public List<Integer> getTurningMovements() {
+            return TurningMovements;
+        }
     }
 
     //*************************************Geometry Property********************************
