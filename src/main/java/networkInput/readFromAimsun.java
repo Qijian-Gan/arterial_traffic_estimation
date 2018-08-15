@@ -409,6 +409,10 @@ public class readFromAimsun {
         protected AimsunJunction DownstreamJunction=null; // This is used to reconstruct the network
         protected AimsunJunction UpstreamJunction=null; // This is used to reconstruct the network
 
+        public int getSectionID() {
+            return SectionID;
+        }
+
         public double[] getLaneLengths() {
             return LaneLengths;
         }

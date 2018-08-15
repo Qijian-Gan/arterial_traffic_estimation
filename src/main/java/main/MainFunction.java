@@ -29,6 +29,7 @@ import estimation.trafficInitialization;
 import dataProvider.loadSimulationData.*;
 import dataProvider.getSimulationData.*;
 import dataProvider.getEstimationResults.*;
+import writer.writingFunctions;
 
 
 public class MainFunction{
@@ -136,7 +137,7 @@ public class MainFunction{
                 System.out.println("Missing the folder name!");
                 System.exit(-1);
             }
-            int EndTime=(int)7.5*3600;
+            int EndTime=(int)(7.5*3600);
             int Interval=300;
             int StartTime=Math.max(0,EndTime-Interval*3);
 
@@ -161,6 +162,13 @@ public class MainFunction{
                 if(trafficStateList.get(i).getTrafficStateByApproach().getQueueThreshold()!=null){
                     trafficStateListNew.add(trafficStateList.get(i));
                 }
+            }
+
+            try {
+                conAimsunSimulation= DriverManager.getConnection(hostAimsunSimulation, userName, password);
+                System.out.println("Succeeded to connect to the MySQL database!");
+            }catch(SQLException e){
+                e.printStackTrace();
             }
             loadEstimationResults.LoadEstimationResultsToDatabase(conAimsunSimulation, "estimation_results", trafficStateList);
 
@@ -211,6 +219,8 @@ public class MainFunction{
 
             List<SimVehicle> simVehicleList=trafficInitialization.VehicleGeneration(aimsunNetworkByApproach.getAimsunNetworkByApproach(),
                    estimationResultsList,activeControlPlans,simulationStatistics);
+
+            writingFunctions.WriteSimVehicleToCSVForAimsun(simVehicleList, cBlock.AimsunFolder);
         }
         else{
             System.out.println("Unknown task!");

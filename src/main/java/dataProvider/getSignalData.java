@@ -553,7 +553,7 @@ public class getSignalData {
 
         int JunctionID=aimsunApproach.getJunctionID();
         int FirstSectionID=aimsunApproach.getFirstSectionID();
-        List<AimsunTurning> aimsunTurningList=aimsunApproach.getTurningBelongToApproach().getTurningProperty();
+        List<AimsunTurning> aimsunTurningList=aimsunApproach.getTurningBelongToApproach().getTurningProperty(); // Get the turnings
 
         // Get the control plan in the junction
         AimsunControlPlanJunction aimsunControlPlanJunction=null;
@@ -570,23 +570,23 @@ public class getSignalData {
             System.out.println("No control plans in Aimsun for Junction:"+JunctionID);
             // If there is no control plan information, use the default settings
             // Assume it is red period and has been activated for 1/3 of the time.
-            for (int i = 0; i < aimsunTurningList.size(); i++) {
+            for (int i = 0; i < aimsunTurningList.size(); i++) { // Loop for each turning
                 if(aimsunTurningList.get(i).getMovement().equals("Left Turn")){
+                    double RedTime=signalSettings.getCycleLength() - signalSettings.getLeftTurnGreen();
                     signalByMovementList.add(new SignalByMovement(aimsunTurningList.get(i).getMovement(),signalSettings.getCycleLength()
-                            , signalSettings.getLeftTurnGreen(),signalSettings.getCycleLength() - signalSettings.getLeftTurnGreen()
-                            ,"Red",(signalSettings.getLeftTurnGreen()/3.0)));
+                            , signalSettings.getLeftTurnGreen(),RedTime,"Red",RedTime/3.0));
                 }else{
+                    double RedTime=signalSettings.getCycleLength() - signalSettings.getThroughGreen();
                     signalByMovementList.add(new SignalByMovement(aimsunTurningList.get(i).getMovement(),signalSettings.getCycleLength()
-                            , signalSettings.getThroughGreen(),signalSettings.getCycleLength() - signalSettings.getThroughGreen()
-                            ,"Red",(signalSettings.getThroughGreen()/3.0)));
+                            , signalSettings.getThroughGreen(),RedTime,"Red",RedTime/3.0));
                 }
             }
             return new PhaseInfForApproach(JunctionID,FirstSectionID,Time,signalByMovementList);
         }else {
             // Get the end time of the last cycle and the actuation duration given the input of current time
             double [] EndTimeAndActivationDuration=DetermineTimeOfLastCycleForJunctionFromAimsun(aimsunControlPlanJunction, Time);
-            double ActivatedDurationInOneCycle=EndTimeAndActivationDuration[0];
-            double EndTimeOfLastCycle=EndTimeAndActivationDuration[1];
+            double EndTimeOfLastCycle=EndTimeAndActivationDuration[0];
+            double ActivatedDurationInOneCycle=EndTimeAndActivationDuration[1];
 
             // Get the signal phase information by movement
             for (int i = 0; i < aimsunTurningList.size(); i++) {
@@ -614,7 +614,8 @@ public class getSignalData {
         int ControlPlanStartTime=aimsunControlPlanJunction.getPlanOffset();
         List<AimsunRing> RingInf=aimsunControlPlanJunction.getRings(); // It contains the coordination information inside
 
-        List<AimsunPhase> aimsunPhases=aimsunControlPlanJunction.getPhases();
+        List<AimsunPhase> aimsunPhases=aimsunControlPlanJunction.getPhases(); // get the number of phases
+        // Construct the phase ID,StartTime,Duration matrix
         double [][] PhaseIDStartTimeDuration=new  double[aimsunPhases.size()][3];
         for(int i=0;i<aimsunPhases.size();i++){
             PhaseIDStartTimeDuration[i][0]=aimsunPhases.get(i).getPhaseID();
@@ -627,8 +628,8 @@ public class getSignalData {
         int CoordinatedPhaseID=0;
         double PhaseOffset=0;
         int FromEndOfPhase=0;
-        for(int i=0;i<RingInf.size();i++){
-            if(RingInf.get(i).getCoordinatedPhase()>0){
+        for(int i=0;i<RingInf.size();i++){ // Loop for each ring
+            if(RingInf.get(i).getCoordinatedPhase()>0){// If it is coordinated
                 IsCoordinated=true;
                 CoordinatedPhaseID=RingInf.get(i).getCoordinatedPhase();
                 PhaseOffset=RingInf.get(i).getOffset();
@@ -679,9 +680,6 @@ public class getSignalData {
             ActivatedDurationInOneCycle=TimeControlPlanHasActivated % aimsunControlPlanJunction.getCycle(); // Get the modulus
             EndTimeOfLastCycle=CurrentTime-ActivatedDurationInOneCycle; // Update the end time of the last cycle
         }
-
-
-
         return new double []{EndTimeOfLastCycle,ActivatedDurationInOneCycle};
     }
 
@@ -778,7 +776,7 @@ public class getSignalData {
             double tmpHasBeenActivated=HasBeenActivated;
             double PhaseRedIndex=-1;
             for(int i=0;i<PhaseInTurn.size();i++){// Loop for each phase
-                if(ActivatedDurationInOneCycle>PhaseInTurn.get(i).getStartingTime()+PhaseInTurn.get(i).getDuration()){
+                if(ActivatedDurationInOneCycle>=PhaseInTurn.get(i).getStartingTime()+PhaseInTurn.get(i).getDuration()){
                     // Find the current time is greater than the end of the phase
                     double tmpDifference=ActivatedDurationInOneCycle-PhaseInTurn.get(i).getStartingTime()-PhaseInTurn.get(i).getDuration();
                     if(tmpDifference<tmpHasBeenActivated){// Get the minimum distance & save the index
@@ -791,8 +789,7 @@ public class getSignalData {
                 // Update the value: HasBeenActivated
                 HasBeenActivated=ActivatedDurationInOneCycle;
                 for(int i=0;i<PhaseInTurn.size();i++){ // Search for the phases ahead
-                    if(i!=PhaseRedIndex &&
-                            ActivatedDurationInOneCycle>(PhaseInTurn.get(i).getStartingTime()+PhaseInTurn.get(i).getDuration())){
+                    if(ActivatedDurationInOneCycle>=(PhaseInTurn.get(i).getStartingTime()+PhaseInTurn.get(i).getDuration())){
                         HasBeenActivated=HasBeenActivated-PhaseInTurn.get(i).getDuration();// Subtract the green time
                     }
                 }

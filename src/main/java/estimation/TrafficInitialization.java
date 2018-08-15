@@ -49,6 +49,35 @@ public class trafficInitialization {
         protected double InitialPosition;
         protected double InitialSpeed;
         protected boolean TrackOrNot;
+
+        public int getSectionID() {
+            return SectionID;
+        }
+
+        public int getLaneID() {
+            return LaneID;
+        }
+
+        public int getVehicleTypeInAimsun() {
+            return VehicleTypeInAimsun;
+        }
+
+        public int getOriginCentroid() {
+            return OriginCentroid;
+        }
+
+        public int getDestinationCentroid() {
+            return DestinationCentroid;
+        }
+
+        public double getInitialPosition() {
+            return InitialPosition;
+        }
+
+        public double getInitialSpeed() {
+            return InitialSpeed;
+        }
+
     }
 
     public static class VehicleAssignmentTmpStr{
@@ -68,11 +97,17 @@ public class trafficInitialization {
 
     //***************************************************************************************************************
     //***************************************************************************************************************
-    //************************** Vehicle Generation  ****************************************************************
+    //************************** Main Function: Vehicle Generation  *************************************************
     //***************************************************************************************************************
     //***************************************************************************************************************
-
-    //******************************************* Main Function *****************************************************
+    /**
+     *
+     * @param aimsunNetworkByApproach List<AimsunApproach>
+     * @param estimationResultsList Map<Integer,EstimationResults> <FirstSectionID, EstimationResults>
+     * @param ActiveControlPlans List<AimsunControlPlanJunction> class
+     * @param simulationStatistics SimulationStatistics class
+     * @return List<SimVehicle> class
+     */
     public static List<SimVehicle> VehicleGeneration(List<AimsunApproach> aimsunNetworkByApproach, Map<Integer,EstimationResults> estimationResultsList
             ,List<AimsunControlPlanJunction> ActiveControlPlans, SimulationStatistics simulationStatistics){
         // This function is used to generate vehicles for Aimsun
@@ -80,32 +115,81 @@ public class trafficInitialization {
         List<SimVehicle> simVehicleList=new ArrayList<SimVehicle>();
 
         if(aimsunNetworkByApproach.size()>0){
-            for(int i=0;i<aimsunNetworkByApproach.size();i++){
+            for(int i=0;i<aimsunNetworkByApproach.size();i++){// Loop for each approach
+                System.out.println("Junction ID="+ aimsunNetworkByApproach.get(i).getJunctionID()+", Junction Name="+
+                        aimsunNetworkByApproach.get(i).getJunctionName()+ ", First Section ID="+aimsunNetworkByApproach.get(i).getFirstSectionID());
                 if(aimsunNetworkByApproach.get(i).getSignalized()==1){ // if it is a signalized junction
-                    int FirstSectionID=aimsunNetworkByApproach.get(i).getFirstSectionID();
+                    int FirstSectionID=aimsunNetworkByApproach.get(i).getFirstSectionID(); // Get the first section in the downstream
                     if(estimationResultsList.containsKey(FirstSectionID)){
                         // If we have estimated queues(non-negative values: -1 means no information; -2 means no such a movement)
                         List<SimVehicle> tmpListSimVehicle=VehicleGenerationForSignalizedJunctionWithEstimation(aimsunNetworkByApproach.get(i),
                                 estimationResultsList.get(FirstSectionID),ActiveControlPlans,simulationStatistics);
                         simVehicleList.addAll(tmpListSimVehicle);
-
                     }else{// When no queue estimates, use the simulated traffic states from Aimsun instead
-                        List<SimVehicle> tmpListSimVehicle=VehicleGenerationForSignalizedJunctionWithSimulation(aimsunNetworkByApproach.get(i),simulationStatistics);
-                        simVehicleList.addAll(tmpListSimVehicle);
+                        //List<SimVehicle> tmpListSimVehicle=VehicleGenerationForSignalizedJunctionWithSimulation(aimsunNetworkByApproach.get(i),
+                        //        simulationStatistics);
+                        //simVehicleList.addAll(tmpListSimVehicle);
                     }
                 }
                 else{// If it is not a signalized junction, e.g., freeway junction
-                    // For unsignalized junction
-
                     // If BEATs simulation is not available, use the Aimsun simulation results
-                    List<SimVehicle> tmpListSimVehicle=VehicleGenerationForUnsignalizedJunctionWithSimulation(aimsunNetworkByApproach.get(i),simulationStatistics);
-                    simVehicleList.addAll(tmpListSimVehicle);
+                    //List<SimVehicle> tmpListSimVehicle=VehicleGenerationForUnsignalizedJunctionWithSimulation(aimsunNetworkByApproach.get(i),
+                    //        simulationStatistics);
+                    //simVehicleList.addAll(tmpListSimVehicle);
                 }
             }
+        }
+
+        // Re-adjust lane ID before inserting vehicles back to Aimsun
+        // This is SO SAD that: Lane ID is labeled from 0 to N-1 (left to right)in GK functions, but from N to 1 (right to left) in AKI functions
+        // We need to use the AKI function to insert vehicles back to Aimsun
+        simVehicleList=ReAdjustLaneIDForSimVehicles(simVehicleList, aimsunNetworkByApproach);
+
+        // Return the list of sim vehicles
+        return simVehicleList;
+    }
+
+    //***************************************************************************************************************
+    //*************** Lane ID Adjustment ****************************************************************************
+    //***************************************************************************************************************
+    /**
+     *
+     * @param simVehicleList List<SimVehicle> class
+     * @param aimsunNetworkByApproach List<AimsunApproach> class
+     * @return List<SimVehicle> class
+     */
+    public static List<SimVehicle> ReAdjustLaneIDForSimVehicles(List<SimVehicle> simVehicleList,List<AimsunApproach> aimsunNetworkByApproach){
+        // This function is used to adjust lane ID for sim vehicles
+        Map<Integer,Integer> SectionNumLanesMap=GenerateSectionNumLanesMap(aimsunNetworkByApproach);
+
+        for(int i=0;i<simVehicleList.size();i++){ // Loop for each sim vehicle
+            int SectionID=simVehicleList.get(i).SectionID;
+            int CurLaneID=simVehicleList.get(i).LaneID;
+            int NumLanes=SectionNumLanesMap.get(SectionID);
+            int LaneIDAimsun=NumLanes-CurLaneID+1; // Update the lane ID
+            simVehicleList.get(i).LaneID=LaneIDAimsun; // Reset it
         }
         return simVehicleList;
     }
 
+    /**
+     *
+     * @param aimsunNetworkByApproach List<AimsunApproach> aimsunNetworkByApproach class
+     * @return Map<Integer,Integer>
+     */
+    public static Map<Integer,Integer> GenerateSectionNumLanesMap(List<AimsunApproach> aimsunNetworkByApproach){
+        // This function is used to generate section-Num Lanes map
+
+        Map<Integer, Integer> SectionNumLanes=new HashMap<Integer, Integer>();
+        for(int i=0;i<aimsunNetworkByApproach.size();i++){ // Loop for each approach
+            for(int j=0;j<aimsunNetworkByApproach.get(i).getSectionBelongToApproach().getProperty().size();j++){// Loop for each section
+                int SectionID=aimsunNetworkByApproach.get(i).getSectionBelongToApproach().getProperty().get(j).getSectionID();
+                int NumOfLanes=aimsunNetworkByApproach.get(i).getSectionBelongToApproach().getProperty().get(j).getNumLanes();
+                SectionNumLanes.put(SectionID,NumOfLanes); // Create the hash map
+            }
+        }
+        return SectionNumLanes;
+    }
 
     //***************************************************************************************************************
     //*************** Vehicle Generation At Signalized Junction *****************************************************
@@ -191,11 +275,13 @@ public class trafficInitialization {
                 // shorten the gaps between moving vehicles.
 
                 // Initialization of the list of vehicles: RearBoundaryByLane is not updated yet
-                vehicleAssignmentTmpStr.VehicleUnAssignedQueued=VehWithODAndLaneQueued;
-                vehicleAssignmentTmpStr.VehicleUnAssignedMoving=VehWithODAndLaneMoving;
+                vehicleAssignmentTmpStr.VehicleUnAssignedQueued=new ArrayList<SimVehicle>(VehWithODAndLaneQueued.size());
+                vehicleAssignmentTmpStr.VehicleUnAssignedQueued.addAll(VehWithODAndLaneQueued);
+                vehicleAssignmentTmpStr.VehicleUnAssignedMoving=new ArrayList<SimVehicle>(VehWithODAndLaneMoving.size());
+                vehicleAssignmentTmpStr.VehicleUnAssignedMoving.addAll(VehWithODAndLaneMoving);
                 vehicleAssignmentTmpStr.VehicleAssigned=new ArrayList<SimVehicle>();
 
-                double Threshold=3-i*0.5;
+                double Threshold=3.05-i*0.5;
                 for(int j=0;j<ListOfSections.size();j++){// Note: Sections are ordered from downstream to upstream
                     vehicleAssignmentTmpStr=AssignVehicleToOneSection(EstimatedStates,vehicleAssignmentTmpStr,aimsunApproach,
                             simulationStatistics,j,Threshold,parameters);
@@ -206,7 +292,7 @@ public class trafficInitialization {
                         AssignmentDone=true;
                         break;
                     }else{ //If not, update the addresses
-                        if(j>0 && j<ListOfSections.size()-1){// Not the first section and not the last section
+                        if(j<ListOfSections.size()-1){// Not the last section
                             // Reassign link ID and lane ID
                             vehicleAssignmentTmpStr=ReAssignedSectionAndLane(vehicleAssignmentTmpStr,aimsunApproach,j+1,simulationStatistics);
                         }
@@ -253,7 +339,7 @@ public class trafficInitialization {
 
         // Assign section and lanes
         Random random = new Random();
-        if(centroidStatistics.equals(null)){// No centroid statistics, Randomly assign lanes
+        if(centroidStatistics==null){// No centroid statistics, Randomly assign lanes
             // For queued vehicles first
             for(int i=0;i<VehicleUnAssignedQueued.size();i++){
                 int LaneID=random.nextInt(NumLanes)+1;
@@ -365,10 +451,14 @@ public class trafficInitialization {
         int NumOfLanes=aimsunApproach.getSectionBelongToApproach().getProperty().get(SectionIdx).getNumLanes();
         double[] LaneLengths=aimsunApproach.getSectionBelongToApproach().getProperty().get(SectionIdx).getLaneLengths();
         double [][] RearBoundaryByLane=new double[NumOfLanes][3];
+        double SectionLength=0;
         for(int i=0;i<NumOfLanes;i++){
             RearBoundaryByLane[i][0]=i+1;// Lane ID from left to Right
             RearBoundaryByLane[i][1]=LaneLengths[i]; // Max rear boundary, i.e., max lane length
             RearBoundaryByLane[i][2]=0; // Current rear boundary=0
+            if(LaneLengths[i]>SectionLength){
+                SectionLength=LaneLengths[i];
+            }
         }
         // Update RearBoundaryByLane according to Status for the most downstream section (the first section)
         if(SectionIdx==0){// The first downstream section
@@ -378,11 +468,11 @@ public class trafficInitialization {
 
         // Assign positions and speeds for queued vehicles
         vehicleAssignmentTmpStr=AssignVehicleToOneSectionForGivenVehicleCategory(vehicleAssignmentTmpStr
-                ,"Queued", parameters,simulationStatistics,Threshold, aimsunApproach,SectionID);
+                ,"Queued", parameters,simulationStatistics,Threshold, aimsunApproach,SectionID,SectionLength);
 
         // Assign positions and speeds for moving vehicles
         vehicleAssignmentTmpStr=AssignVehicleToOneSectionForGivenVehicleCategory(vehicleAssignmentTmpStr
-                , "Moving", parameters,simulationStatistics,Threshold, aimsunApproach,SectionID);
+                , "Moving", parameters,simulationStatistics,Threshold, aimsunApproach,SectionID,SectionLength);
 
         return vehicleAssignmentTmpStr;
     }
@@ -459,7 +549,7 @@ public class trafficInitialization {
      */
     public static VehicleAssignmentTmpStr AssignVehicleToOneSectionForGivenVehicleCategory(VehicleAssignmentTmpStr vehicleAssignmentTmpStr
             ,String Category,Parameters parameters,SimulationStatistics simulationStatistics,double Threshold, AimsunApproach aimsunApproach
-            ,int SectionID){
+            ,int SectionID,double LinkLength){
         // This function is used to assign vehicle to one section for the given vehicle categority: queued or moving
 
         // Initialization
@@ -474,7 +564,6 @@ public class trafficInitialization {
         }
         double[][] RearBoundaryByLane=vehicleAssignmentTmpStr.RearBoundaryByLane;
         List<SimVehicle> tmpSimVehicleAssign=vehicleAssignmentTmpStr.VehicleAssigned;
-        double LinkLength=aimsunApproach.getGeoDesign().getLinkLength();
         List<Integer> ListOfSections=aimsunApproach.getSectionBelongToApproach().getListOfSections();
         AimsunSection aimsunSection=null;
         for(int i=0;i<ListOfSections.size();i++){
@@ -512,6 +601,9 @@ public class trafficInitialization {
                     // Loop for each vehicles
                     for (int j = 0; j < simVehiclesByLane.size(); j++) {
                         double[] SpacingAndSpeed = GetSpacingAndSpeed(laneStatistics, Category, parameters, Threshold); // Spacing & Speed
+                        // Adjust the spacing for different vehicle types
+                        int TypeForIndividualVehicle=simVehiclesByLane.get(j).VehicleTypeInAimsun;
+                        SpacingAndSpeed=AdjustSpacingForDifferentVehicleTypes(TypeForIndividualVehicle,SpacingAndSpeed, parameters,Threshold);
 
                         if (RearBoundaryByLane[i][1] < RearBoundaryByLane[i][2]+SpacingAndSpeed[0]/2) {
                             // Reach the upstream boundary of the given lane "i"
@@ -519,6 +611,11 @@ public class trafficInitialization {
                         } else {
                             // Generate a new vehicle
                             double InitialPosition = LinkLength - RearBoundaryByLane[i][2] - SpacingAndSpeed[0] / 2;
+                            // Re-adjust Initial position, not out of bound
+                            // It only affects moving vehicles & queued vehicles should be find
+                            double LaneLength=RearBoundaryByLane[simVehiclesByLane.get(j).LaneID-1][1];
+                            InitialPosition=Math.max(InitialPosition,LinkLength-LaneLength);
+
                             double Speed = SpacingAndSpeed[1];
                             SimVehicle simVehicle = new SimVehicle(simVehiclesByLane.get(j).SectionID, simVehiclesByLane.get(j).LaneID,
                                     simVehiclesByLane.get(j).VehicleTypeInAimsun, simVehiclesByLane.get(j).OriginCentroid, simVehiclesByLane.get(j).DestinationCentroid,
@@ -555,12 +652,19 @@ public class trafficInitialization {
                             LaneStatistics laneStatistics = LaneStatisticsMap.get(LaneID); // Get the lane statistics
                             double[] SpacingAndSpeed = GetSpacingAndSpeed(laneStatistics, Category, parameters, Threshold); // Spacing & Speed
 
+                            int TypeForIndividualVehicle=tmpSimVehicleUnassign.get(i).VehicleTypeInAimsun;
+                            SpacingAndSpeed=AdjustSpacingForDifferentVehicleTypes(TypeForIndividualVehicle,SpacingAndSpeed, parameters,Threshold);
+
                             if(RearBoundaryByLane[LaneID-1][2]+SpacingAndSpeed[0]/2<=RearBoundaryByLane[LaneID-1][1])// Have enough space to add
                             {
                                 // Generate a new vehicle
                                 double InitialPosition = LinkLength - RearBoundaryByLane[LaneID - 1][2] - SpacingAndSpeed[0] / 2;
-                                double Speed = SpacingAndSpeed[1];
+                                // Re-adjust Initial position, not out of bound
+                                // It only affects moving vehicles & queued vehicles should be find
+                                double LaneLength=RearBoundaryByLane[LaneID-1][1];
+                                InitialPosition=Math.max(InitialPosition,LinkLength-LaneLength);
 
+                                double Speed = SpacingAndSpeed[1];
                                 // New vehicle with a new lane ID
                                 SimVehicle simVehicle = new SimVehicle(tmpSimVehicleUnassign.get(i).SectionID, LaneID,
                                         tmpSimVehicleUnassign.get(i).VehicleTypeInAimsun, tmpSimVehicleUnassign.get(i).OriginCentroid,
@@ -602,12 +706,19 @@ public class trafficInitialization {
                             LaneStatistics laneStatistics = LaneStatisticsMap.get(LaneID); // Get the lane statistics
                             double[] SpacingAndSpeed = GetSpacingAndSpeed(laneStatistics, Category, parameters, Threshold); // Spacing & Speed
 
+                            int TypeForIndividualVehicle=tmpSimVehicleUnassign.get(i).VehicleTypeInAimsun;
+                            SpacingAndSpeed=AdjustSpacingForDifferentVehicleTypes(TypeForIndividualVehicle,SpacingAndSpeed, parameters,Threshold);
+
                             if(RearBoundaryByLane[LaneID-1][2]+SpacingAndSpeed[0]/2<=RearBoundaryByLane[LaneID-1][1])// Have enough space to add
                             {
                                 // Generate a new vehicle
                                 double InitialPosition = LinkLength - RearBoundaryByLane[LaneID - 1][2] - SpacingAndSpeed[0] / 2;
-                                double Speed = SpacingAndSpeed[1];
+                                // Re-adjust Initial position, not out of bound
+                                // It only affects moving vehicles & queued vehicles should be find
+                                double LaneLength=RearBoundaryByLane[LaneID-1][1];
+                                InitialPosition=Math.max(InitialPosition,LinkLength-LaneLength);
 
+                                double Speed = SpacingAndSpeed[1];
                                 // New vehicle with a new lane ID
                                 SimVehicle simVehicle = new SimVehicle(tmpSimVehicleUnassign.get(i).SectionID, LaneID,
                                         tmpSimVehicleUnassign.get(i).VehicleTypeInAimsun, tmpSimVehicleUnassign.get(i).OriginCentroid,
@@ -641,12 +752,19 @@ public class trafficInitialization {
                             LaneStatistics laneStatistics = LaneStatisticsMap.get(LaneID); // Get the lane statistics
                             double[] SpacingAndSpeed = GetSpacingAndSpeed(laneStatistics, Category, parameters, Threshold); // Spacing & Speed
 
+                            int TypeForIndividualVehicle=tmpSimVehicleUnassign.get(i).VehicleTypeInAimsun;
+                            SpacingAndSpeed=AdjustSpacingForDifferentVehicleTypes(TypeForIndividualVehicle,SpacingAndSpeed, parameters,Threshold);
+
                             if(RearBoundaryByLane[LaneID-1][2]+SpacingAndSpeed[0]/2<=RearBoundaryByLane[LaneID-1][1])// Have enough space to add
                             {
                                 // Generate a new vehicle
                                 double InitialPosition = LinkLength - RearBoundaryByLane[LaneID - 1][2] - SpacingAndSpeed[0] / 2;
-                                double Speed = SpacingAndSpeed[1];
+                                // Re-adjust Initial position, not out of bound
+                                // It only affects moving vehicles & queued vehicles should be find
+                                double LaneLength=RearBoundaryByLane[LaneID-1][1];
+                                InitialPosition=Math.max(InitialPosition,LinkLength-LaneLength);
 
+                                double Speed = SpacingAndSpeed[1];
                                 // New vehicle with a new lane ID
                                 SimVehicle simVehicle = new SimVehicle(tmpSimVehicleUnassign.get(i).SectionID, LaneID,
                                         tmpSimVehicleUnassign.get(i).VehicleTypeInAimsun, tmpSimVehicleUnassign.get(i).OriginCentroid,
@@ -680,6 +798,30 @@ public class trafficInitialization {
 
     /**
      *
+     * @param TypeForIndividualVehicle Vehicle type
+     * @param SpacingAndSpeed double[spacing, speed]
+     * @param parameters Parameters class
+     * @param Threshold Threshold for assignment
+     * @return double[spacing, speed]
+     */
+    public static double[] AdjustSpacingForDifferentVehicleTypes(int TypeForIndividualVehicle,double[] SpacingAndSpeed,
+                                                                 Parameters parameters,double Threshold){
+        // This function is used to adjust spacing for different vehicle types
+
+        if(TypeForIndividualVehicle>1){
+            // Not regular vehicle
+            if(SpacingAndSpeed[0]==parameters.getVehicleParams().getJamSpacing()){
+                // Queued vehicle?
+                SpacingAndSpeed[0]=SpacingAndSpeed[0]*2; // Passenger car equivalent
+            }else{
+                SpacingAndSpeed[0]=SpacingAndSpeed[0]*(Math.max(Threshold,2))/Threshold; // Passenger car equivalent
+            }
+        }
+        return SpacingAndSpeed;
+    }
+
+    /**
+     *
      * @param RearBoundaryByLane double[][]
      * @param aimsunApproach AimsunApproach class
      * @param parameters Parameters class
@@ -688,7 +830,7 @@ public class trafficInitialization {
      */
     public static double[][] ReAdjustRearBoundaryForAssignment(double[][] RearBoundaryByLane,AimsunApproach aimsunApproach,Parameters parameters, int SectionID){
         // This function is used to adjust rear boundaries if the section is the most downstream one
-        // It is necessary in the level-3 and level 4 assignment: not to assign vehicles within region from stopbar to advance detectors
+        // It is necessary in the level-3 and level 4 assignment: not to assign vehicles within region from stopbar to advance detectors/Turning pocket
         if(SectionID==aimsunApproach.getFirstSectionID()){
             // Need to adjust the rear boundaries
 
@@ -731,13 +873,27 @@ public class trafficInitialization {
             }
         }
         if(DistanceToStopbar==0){// If not found
-            // Adjust distance to stopbar according to the default value and the section length
-            double[] LaneLengths=aimsunApproach.getSectionBelongToApproach().getProperty().get(0).getLaneLengths();
-            Arrays.sort(LaneLengths);
-            double SectionLength=LaneLengths[LaneLengths.length-1]; // Get the last one (maximum)
-            DistanceToStopbar=Math.min(parameters.intersectionParams.DistanceAdvanceDetector,SectionLength);
+            DistanceToStopbar=parameters.intersectionParams.DistanceAdvanceDetector;
+        }
+        // Adjust distance to stopbar according to the section length
+        double[] LaneLengths=aimsunApproach.getSectionBelongToApproach().getProperty().get(0).getLaneLengths();
+        Arrays.sort(LaneLengths);
+        double SectionLength=LaneLengths[LaneLengths.length-1]; // Get the last one (maximum)
+        DistanceToStopbar=Math.min(parameters.intersectionParams.DistanceAdvanceDetector,SectionLength);
+
+        // Adjust distance to stopbar according to the turning pocket
+        int[] IsFullLane=aimsunApproach.getSectionBelongToApproach().getProperty().get(0).getIsFullLane();
+        double TurningPocket=0;
+        for(int i=0;i<IsFullLane.length;i++){
+            if(IsFullLane[i]==0 & TurningPocket<LaneLengths[i]){
+                TurningPocket=LaneLengths[i]; // Get the maximum turning pocket
+            }
+        }
+        if(TurningPocket>0){ // Have turning pocket?
+            DistanceToStopbar=Math.min(DistanceToStopbar,TurningPocket);
         }
 
+        // Return value
         return DistanceToStopbar;
     }
 
@@ -1327,7 +1483,7 @@ public class trafficInitialization {
                     int DestinationCentroid=SelectedSimVehInf.get(i).getAimsunVehInfList().get(j).getCentroidDestination();
                     double InitialPosition=SelectedSimVehInf.get(i).getAimsunVehInfList().get(j).getCurrentPosition();
                     double InitialSpeed=SelectedSimVehInf.get(i).getAimsunVehInfList().get(j).getCurrentSpeed();
-                    boolean TrackOrNot=true;
+                    boolean TrackOrNot=false;
                     SimVehicle simVehicle=new SimVehicle(SectionID,LaneID,VehicleTypeInAimsun,OriginCentroid,DestinationCentroid
                             ,InitialPosition,InitialSpeed,TrackOrNot);
                     simVehicleList.add(simVehicle);
@@ -1342,7 +1498,6 @@ public class trafficInitialization {
     //***************************************************************************************************************
 
     //*************** Vehicle Generation At UnSignalized Junction With Simulation ***********************************
-
     /**
      *
      * @param aimsunApproach AimsunApproach class

@@ -43,6 +43,13 @@ public class getEstimationResults {
         }
     }
 
+    /**
+     *
+     * @param conAimsunSimulation Database connection
+     * @param TableName String
+     * @param queryMeasures QueryMeasures class
+     * @return Map<Integer,EstimationResults>
+     */
     public static Map<Integer,EstimationResults> GetEstimationResultsFromDatabase(Connection conAimsunSimulation, String TableName,
                                                                            QueryMeasures queryMeasures){
         // This function is used to get estimation results from database
@@ -107,6 +114,11 @@ public class getEstimationResults {
         return estimationResultsMap;
     }
 
+    /**
+     *
+     * @param paramsString String
+     * @return Parameters class
+     */
     public static Parameters ConvertStringToParams(String paramsString){
         // This function is used to convert string to Parameters (class)
 
