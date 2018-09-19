@@ -1,8 +1,9 @@
 package writer;
 
-import estimation.trafficInitialization.*;
+import initialization.trafficInitialization.*;
 import java.util.*;
 import java.io.*;
+import commonClass.forInitialization.*;
 
 public class writingFunctions {
 

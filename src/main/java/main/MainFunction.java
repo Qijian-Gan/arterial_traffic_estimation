@@ -1,17 +1,11 @@
 package main;
 
 import java.io.File;
-import java.io.IOException;
-import java.sql.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.Date;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
 
 import config.getTaskID;
 import config.loadProgramSettingsFromFile;
@@ -20,16 +14,14 @@ import settings.programSettings;
 import networkInput.readFromAimsun;
 import networkInput.readFromAimsun.*;
 import networkInput.reconstructNetwork;
-import networkInput.reconstructNetwork.*;
 import connectors.extractNetworkFile;
 import estimation.trafficStateEstimation;
 import estimation.trafficStateEstimation.*;
-import estimation.trafficInitialization.*;
-import estimation.trafficInitialization;
-import dataProvider.loadSimulationData.*;
+import initialization.trafficInitialization;
 import dataProvider.getSimulationData.*;
 import dataProvider.getEstimationResults.*;
 import writer.writingFunctions;
+import commonClass.forInitialization.*;
 
 
 public class MainFunction{

@@ -575,6 +575,14 @@ public class trafficStateEstimation {
         }
         protected String[] StatusAssessment;
         protected int[] QueueAssessment;
+
+        public int[] getQueueAssessment() {
+            return QueueAssessment;
+        }
+
+        public String[] getStatusAssessment() {
+            return StatusAssessment;
+        }
     }
 
     public static class AssessmentStateAndQueueByMovement{
