@@ -7,6 +7,27 @@ import java.util.List;
 
 public class util {
 
+    /**
+     *
+     * @param Input double[]
+     * @return double
+     */
+    public static double MeanWithoutZero(double [] Input){
+        // This function returns the mean for non-zero values
+
+        double Output=0;
+        double NumNonZero=0;
+        for(int i=0;i<Input.length;i++){
+            if(Input[i]!=0){
+                NumNonZero=NumNonZero+1;
+                Output=Output+Input[i];
+            }
+        }
+        if(NumNonZero>0){
+            Output=Output/NumNonZero;
+        }
+        return Output;
+    }
 
     //************************************************************************************
     // Insert into database
