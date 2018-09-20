@@ -1,8 +1,7 @@
 package initialization;
 
 import commonClass.forInitialization.SimVehicle;
-import estimation.trafficStateEstimation;
-import estimation.trafficStateEstimation.*;
+import commonClass.parameters.*;
 
 import java.util.*;
 

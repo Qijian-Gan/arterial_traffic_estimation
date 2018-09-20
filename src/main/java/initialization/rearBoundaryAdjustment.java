@@ -1,11 +1,9 @@
 package initialization;
 
-import estimation.trafficStateEstimation;
-import estimation.trafficStateEstimation.*;
-import networkInput.readFromAimsun;
-import networkInput.readFromAimsun.*;
-import networkInput.reconstructNetwork;
-import networkInput.reconstructNetwork.*;
+import commonClass.forGeneralNetwork.approach.*;
+import commonClass.forGeneralNetwork.lane.*;
+import commonClass.forAimsunNetwork.junction.*;
+import commonClass.parameters.*;
 
 import java.util.List;
 

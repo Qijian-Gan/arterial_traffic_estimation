@@ -1,10 +1,10 @@
 package initialization;
 
 import dataProvider.getSignalData;
-import dataProvider.getSignalData.*;
-import estimation.trafficStateEstimation.*;
-import networkInput.readFromAimsun.*;
-import networkInput.reconstructNetwork.*;
+import commonClass.forGeneralNetwork.approach.*;
+import commonClass.forAimsunNetwork.signalControl.*;
+import commonClass.signalData.*;
+import commonClass.parameters.*;
 
 
 import java.util.List;
@@ -116,7 +116,7 @@ public class determinationOfQueuedAndMovingVehicles {
      * @param signalByMovement SignalByMovement class
      * @return NumQueuedAndMoving: int[queued, moving]
      */
-    public static int[] DetermineQueuedAndMovingVehicles(int [] MaxMinQueuedVehicles, getSignalData.SignalByMovement signalByMovement,
+    public static int[] DetermineQueuedAndMovingVehicles(int [] MaxMinQueuedVehicles, SignalByMovement signalByMovement,
                                                          double Headway){
         // This function is used to determine the proportions of queued and moving vehicles based on the signal input
         // This part contains some engineering adjustments

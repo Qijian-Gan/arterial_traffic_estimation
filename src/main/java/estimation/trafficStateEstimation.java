@@ -1,16 +1,20 @@
 package estimation;
 
 import main.MainFunction;
-import networkInput.readFromAimsun.*;
-import networkInput.reconstructNetwork.*;
 import dataProvider.*;
 import dataProvider.getSignalData;
-import dataProvider.getDetectorData.*;
-import sun.misc.Signal;
+import commonClass.forGeneralNetwork.*;
+import commonClass.forAimsunNetwork.signalControl.*;
+import commonClass.forGeneralNetwork.approach.*;
+import commonClass.forGeneralNetwork.detector.*;
+import commonClass.detectorData.*;
+import commonClass.parameters.*;
+import commonClass.query.*;
+import commonClass.forEstimation.*;
+
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -19,586 +23,8 @@ import java.util.List;
 public class trafficStateEstimation {
 
     // ********************************************************************
-    // ***********************Settings*************************************
-    // ********************************************************************
-
-    // ***********************Parameters*******************************
-    public static class Parameters{
-        // Parameter settings
-        public Parameters(VehicleParams _vehicleParams, IntersectionParams _intersectionParams,SignalSettings _signalSettings,
-                          TurningProportion _turningProportion,EstimationParams _estimationParams){
-            this.vehicleParams=_vehicleParams;
-            this.intersectionParams=_intersectionParams;
-            this.signalSettings=_signalSettings;
-            this.turningProportion=_turningProportion;
-            this.estimationParams=_estimationParams;
-        }
-        protected VehicleParams vehicleParams; // Vehicle parameters
-        protected IntersectionParams intersectionParams; // Intersection parameters
-        protected SignalSettings signalSettings; // Signal Settings
-        protected TurningProportion turningProportion; // Turning proportions
-        protected EstimationParams estimationParams; // Estimation parameters
-
-        public SignalSettings getSignalSettings() {
-            return signalSettings;
-        }
-
-        public VehicleParams getVehicleParams() {
-            return vehicleParams;
-        }
-
-        public IntersectionParams getIntersectionParams() {
-            return intersectionParams;
-        }
-
-        public TurningProportion getTurningPrortions() {
-            return turningProportion;
-        }
-
-        public EstimationParams getEstimationParams() {
-            return estimationParams;
-        }
-    }
-
-    public static class VehicleParams{
-        // Vehicle parameters
-        public VehicleParams(double _VehicleLength,double _StartupLostTime,double _JamSpacing){
-            this.VehicleLength=_VehicleLength;
-            this.StartupLostTime=_StartupLostTime;
-            this.JamSpacing=_JamSpacing;
-        }
-        protected double VehicleLength;
-        protected double StartupLostTime;
-        protected double JamSpacing;
-
-        public double getVehicleLength() {
-            return VehicleLength;
-        }
-
-        public double getStartupLostTime() {
-            return StartupLostTime;
-        }
-
-        public double getJamSpacing() {
-            return JamSpacing;
-        }
-    }
-
-    public static class IntersectionParams{
-        // Intersection parameters
-        public IntersectionParams(double _SaturationHeadway,double _SaturationSpeedLeft,
-                                  double _SaturationSpeedRight,double _SaturationSpeedThrough,
-                                  double _DistanceAdvanceDetector,double _LeftTurnPocket,
-                                  double _RightTurnPocket,double _DistanceToEnd){
-            this.SaturationHeadway=_SaturationHeadway;
-            this.SaturationSpeedLeft=_SaturationSpeedLeft;
-            this.SaturationSpeedThrough=_SaturationSpeedThrough;
-            this.SaturationSpeedRight=_SaturationSpeedRight;
-            this.DistanceAdvanceDetector=_DistanceAdvanceDetector;
-            this.LeftTurnPocket=_LeftTurnPocket;
-            this.RightTurnPocket=_RightTurnPocket;
-            this.DistanceToEnd=_DistanceToEnd;
-        }
-        protected double SaturationHeadway;
-        protected double SaturationSpeedLeft;
-        protected double SaturationSpeedRight;
-        protected double SaturationSpeedThrough;
-        protected double DistanceAdvanceDetector;
-        protected double LeftTurnPocket;
-        protected double RightTurnPocket;
-        protected double DistanceToEnd;
-
-        public double getSaturationHeadway() {
-            return SaturationHeadway;
-        }
-
-        public double getSaturationSpeedLeft() {
-            return SaturationSpeedLeft;
-        }
-
-        public double getSaturationSpeedThrough() {
-            return SaturationSpeedThrough;
-        }
-
-        public double getSaturationSpeedRight() {
-            return SaturationSpeedRight;
-        }
-
-        public double getDistanceAdvanceDetector() {
-            return DistanceAdvanceDetector;
-        }
-
-        public double getLeftTurnPocket() {
-            return LeftTurnPocket;
-        }
-
-        public double getRightTurnPocket() {
-            return RightTurnPocket;
-        }
-
-        public double getDistanceToEnd() {
-            return DistanceToEnd;
-        }
-    }
-
-    public static class EstimationParams{
-        // Estimation parameters
-        public EstimationParams(double _FFSpeedForAdvDet,double _OccThresholdForAdvDet){
-            this.FFSpeedForAdvDet=_FFSpeedForAdvDet;
-            this.OccThresholdForAdvDet=_OccThresholdForAdvDet;
-        }
-        protected double FFSpeedForAdvDet;
-        protected double OccThresholdForAdvDet;
-
-        public double getFFSpeedForAdvDet() {
-            return FFSpeedForAdvDet;
-        }
-
-        public double getOccThresholdForAdvDet() {
-            return OccThresholdForAdvDet;
-        }
-    }
-
-    public static class SignalSettings{
-        // Signal settings
-        public SignalSettings(int _CycleLength,int _LeftTurnGreen,int _ThroughGreen,int _RightTurnGreen,String _LeftTurnSetting){
-            this.CycleLength=_CycleLength;
-            this.LeftTurnGreen=_LeftTurnGreen;
-            this.ThroughGreen=_ThroughGreen;
-            this.RightTurnGreen=_RightTurnGreen;
-            this.LeftTurnSetting=_LeftTurnSetting;
-        }
-        protected int CycleLength;
-        protected int LeftTurnGreen;
-        protected int ThroughGreen;
-        protected int RightTurnGreen;
-        protected String LeftTurnSetting;
-
-        public int getCycleLength() {
-            return CycleLength;
-        }
-
-        public int getLeftTurnGreen() {
-            return LeftTurnGreen;
-        }
-
-        public int getThroughGreen() {
-            return ThroughGreen;
-        }
-
-        public int getRightTurnGreen() {
-            return RightTurnGreen;
-        }
-
-        public String getLeftTurnSetting() {
-            return LeftTurnSetting;
-        }
-    }
-
-    public static class TurningProportion{
-        //Turning proportions
-        public TurningProportion(double [] _LeftTurn,double [] _LeftTurnQueue,double [] _AdvanceLeftTurn,
-                                double [] _RightTurn,double [] _RightTurnQueue,double [] _AdvanceRightTurn,
-                                double [] _Advance,double [] _AllMovements,double [] _AdvanceThrough,
-                                double [] _Through,double [] _AdvanceLeftAndThrough,double [] _LeftAndThrough,
-                                double [] _AdvanceLeftAndRight,double [] _LeftAndRight,double [] _AdvanceThroughAndRight,
-                                double [] _ThroughAndRight){
-            this.LeftTurn=_LeftTurn;
-            this.LeftTurnQueue=_LeftTurnQueue;
-            this.AdvanceLeftTurn=_AdvanceLeftTurn;
-            this.RightTurn=_RightTurn;
-            this.RightTurnQueue=_RightTurnQueue;
-            this.AdvanceRightTurn=_AdvanceRightTurn;
-            this.Advance=_Advance;
-            this.AllMovements=_AllMovements;
-            this.AdvanceThrough=_AdvanceThrough;
-            this.Through=_Through;
-            this.AdvanceLeftAndThrough=_AdvanceLeftAndThrough;
-            this.LeftAndThrough=_LeftAndThrough;
-            this.AdvanceLeftAndRight=_AdvanceLeftAndRight;
-            this.LeftAndRight=_LeftAndRight;
-            this.AdvanceThroughAndRight=_AdvanceThroughAndRight;
-            this.ThroughAndRight=_ThroughAndRight;
-        }
-        protected double [] LeftTurn; // Exclusive left turn
-        protected double [] LeftTurnQueue;
-        protected double [] AdvanceLeftTurn;
-        protected double [] RightTurn; // Exclusive right turn
-        protected double [] RightTurnQueue;
-        protected double [] AdvanceRightTurn;
-        protected double [] Advance;   // Mixed through, left turn, and right turn
-        protected double [] AllMovements;
-        protected double [] AdvanceThrough; // Exclusive through
-        protected double [] Through;
-        protected double [] AdvanceLeftAndThrough; // Left turn and through only
-        protected double [] LeftAndThrough;
-        protected double [] AdvanceLeftAndRight;  // Left turn and right turn only
-        protected double [] LeftAndRight;
-        protected double [] AdvanceThroughAndRight; // Through and right turn only
-        protected double [] ThroughAndRight;
-
-        public double[] getLeftTurn() {
-            return LeftTurn;
-        }
-
-        public double[] getAdvanceLeftTurn() {
-            return AdvanceLeftTurn;
-        }
-
-        public double[] getRightTurn() {
-            return RightTurn;
-        }
-
-        public double[] getAdvanceRightTurn() {
-            return AdvanceRightTurn;
-        }
-
-        public double[] getAdvance() {
-            return Advance;
-        }
-
-        public double[] getAllMovements() {
-            return AllMovements;
-        }
-
-        public double[] getAdvanceThrough() {
-            return AdvanceThrough;
-        }
-
-        public double[] getThrough() {
-            return Through;
-        }
-
-        public double[] getAdvanceLeftAndThrough() {
-            return AdvanceLeftAndThrough;
-        }
-
-        public double[] getLeftAndThrough() {
-            return LeftAndThrough;
-        }
-
-        public double[] getAdvanceLeftAndRight() {
-            return AdvanceLeftAndRight;
-        }
-
-        public double[] getLeftAndRight() {
-            return LeftAndRight;
-        }
-
-        public double[] getAdvanceThroughAndRight() {
-            return AdvanceThroughAndRight;
-        }
-
-        public double[] getThroughAndRight() {
-            return ThroughAndRight;
-        }
-    }
-
-    // ***********************Query Measures*******************************
-    public static class QueryMeasures{
-        // Settings of data query
-        public QueryMeasures(int _Year,int _Month,int _Day,int _DayOfWeek,boolean _Median,int [] _TimeOfDay,int _Interval){
-            this.Year=_Year;
-            this.Month=_Month;
-            this.Day=_Day;
-            this.DayOfWeek=_DayOfWeek;
-            this.Median=_Median;
-            this.TimeOfDay=_TimeOfDay;
-            this.Interval=_Interval;
-        }
-        protected int Year;
-        protected int Month;
-        protected int Day;
-        protected int DayOfWeek;
-        protected boolean Median; // Whether to use median or not
-        protected int [] TimeOfDay=null; // [From time, To time]
-        protected int Interval; // Aggregation interval
-
-        public int getYear() {
-            return Year;
-        }
-
-        public int getMonth() {
-            return Month;
-        }
-
-        public int getDay() {
-            return Day;
-        }
-
-        public int getDayOfWeek() {
-            return DayOfWeek;
-        }
-
-        public boolean isMedian() {
-            return Median;
-        }
-
-        public int[] getTimeOfDay() {
-            return TimeOfDay;
-        }
-
-        public int getInterval() {
-            return Interval;
-        }
-    }
-
-    // ***********************Traffic States*******************************
-    public static class TrafficState{
-        // Traffic states with complete information
-        public TrafficState(AimsunApproach _aimsunApproach, Parameters _parameters,QueryMeasures _queryMeasures
-                , TrafficStateByApproach _trafficStateByApproach){
-            this.aimsunApproach=_aimsunApproach;
-            this.parameters=_parameters;
-            this.queryMeasures=_queryMeasures;
-            this.trafficStateByApproach=_trafficStateByApproach;
-        }
-        protected AimsunApproach aimsunApproach;
-        protected Parameters parameters;
-        protected QueryMeasures queryMeasures;
-        protected TrafficStateByApproach trafficStateByApproach;
-
-        public TrafficStateByApproach getTrafficStateByApproach() {
-            return trafficStateByApproach;
-        }
-
-        public AimsunApproach getAimsunApproach() {
-            return aimsunApproach;
-        }
-
-        public QueryMeasures getQueryMeasures() {
-            return queryMeasures;
-        }
-
-        public Parameters getParameters() {
-            return parameters;
-        }
-    }
-
-    public static class TrafficStateByApproach{
-        // Profile for traffic states for different groups of detectors: advance, exclusive left-/right-turn, general stopbar
-        public TrafficStateByApproach(int _Time,List<TrafficStateByDetectorType> _AdvanceDetectors,List<TrafficStateByDetectorType> _ExclusiveLeftTurnDetectors
-                , List<TrafficStateByDetectorType> _ExclusiveRightTurnDetectors,List<TrafficStateByDetectorType> _GeneralStopbarDetectors
-                , QueueThreshold _queueThreshold,String[] _StateByMovement,int[] _QueueByMovement){
-            this.Time=_Time;
-            this.AdvanceDetectors=_AdvanceDetectors;
-            this.ExclusiveLeftTurnDetectors=_ExclusiveLeftTurnDetectors;
-            this.ExclusiveRightTurnDetectors=_ExclusiveRightTurnDetectors;
-            this.GeneralStopbarDetectors=_GeneralStopbarDetectors;
-            this.queueThreshold=_queueThreshold;
-            this.StateByMovement=_StateByMovement;
-            this.QueueByMovement=_QueueByMovement;
-        }
-        protected int Time;
-        // Traffic states at detectors
-        protected List<TrafficStateByDetectorType> AdvanceDetectors; // At advance detectors
-        protected List<TrafficStateByDetectorType> ExclusiveLeftTurnDetectors; // At exclusive left turn detectors
-        protected List<TrafficStateByDetectorType> ExclusiveRightTurnDetectors; // At exclusive right turn detectors
-        protected List<TrafficStateByDetectorType> GeneralStopbarDetectors; // At general stopbar detectors
-        // Traffic states by movements
-        protected QueueThreshold queueThreshold;
-        protected String[] StateByMovement;
-        protected int[] QueueByMovement;
-
-        public QueueThreshold getQueueThreshold() {
-            return queueThreshold;
-        }
-
-        public int getTime() {
-            return Time;
-        }
-
-        public List<TrafficStateByDetectorType> getAdvanceDetectors() {
-            return AdvanceDetectors;
-        }
-
-        public List<TrafficStateByDetectorType> getExclusiveLeftTurnDetectors() {
-            return ExclusiveLeftTurnDetectors;
-        }
-
-        public List<TrafficStateByDetectorType> getExclusiveRightTurnDetectors() {
-            return ExclusiveRightTurnDetectors;
-        }
-
-        public List<TrafficStateByDetectorType> getGeneralStopbarDetectors() {
-            return GeneralStopbarDetectors;
-        }
-
-        public String[] getStateByMovement() {
-            return StateByMovement;
-        }
-
-        public int[] getQueueByMovement() {
-            return QueueByMovement;
-        }
-    }
-
-    public static class TrafficStateByDetectorType{
-        // Property of traffic states by detector type
-        public TrafficStateByDetectorType(String _DetectorType,String _Rate, double[] _Thresholds,double _AvgOcc,
-                                           double _AvgFlow, double _TotLanes,List<Double> _Occupancies,List<Double> _Flows){
-            this.DetectorType=_DetectorType;
-            this.Rate=_Rate;
-            this.Thresholds=_Thresholds;
-            this.AvgOcc=_AvgOcc;
-            this.AvgFlow=_AvgFlow;
-            this.TotLanes=_TotLanes;
-            this.Occupancies=_Occupancies;
-            this.Flows=_Flows;
-        }
-        protected String DetectorType; // Detector type
-        protected String Rate; // This is a string
-        protected double [] Thresholds;
-        protected double AvgOcc; // Average occ and flow
-        protected double AvgFlow;
-        protected double TotLanes; // Total number of lanes
-        protected List<Double> Occupancies; // List of occupancies
-        protected List<Double> Flows; // List of flows
-
-        public String getDetectorType() {
-            return DetectorType;
-        }
-
-        public String getRate() {
-            return Rate;
-        }
-
-        public double getAvgFlow() {
-            return AvgFlow;
-        }
-
-        public double getAvgOcc() {
-            return AvgOcc;
-        }
-
-        public double getTotLanes() {
-            return TotLanes;
-        }
-    }
-
-    public static class ThresholdAndRate{
-        // Thresholds and Rates
-        public ThresholdAndRate(String _Rate,double [] _Thresholds){
-            this.Rate=_Rate;
-            this.Thresholds=_Thresholds;
-        }
-        protected String Rate; // This is a string
-        protected double [] Thresholds;
-    }
-
-    // ***********************Detector Types*******************************
-    public static class DetectorTypeByMovement{
-        // Category/types of detectors by each movement: left-turn, through, and right-turn
-        public DetectorTypeByMovement(String [] _Left,String [] _Through,String [] _Right){
-            this.Left=_Left;
-            this.Through=_Through;
-            this.Right=_Right;
-        }
-        protected String [] Left;
-        protected String [] Through;
-        protected String [] Right;
-    }
-
-    // ***********************Aggregated traffic flow values*******************************
-    public static class AggregatedTrafficStates{
-        // Profile for aggregated traffic states
-        public AggregatedTrafficStates(double [] _AggregatedStatus,double [] _AvgOccupancy,double [] _AggregatedTotLanes,
-                                       double [] _ThresholdLow, double [] _ThresholdHigh){
-            this.AggregatedStatus=_AggregatedStatus;
-            this.AvgOccupancy=_AvgOccupancy;
-            this.AggregatedTotLanes=_AggregatedTotLanes;
-            this.ThresholdLow=_ThresholdLow;
-            this.ThresholdHigh=_ThresholdHigh;
-        }
-        protected double [] AggregatedStatus; // Status: rate
-        protected double [] AvgOccupancy; // Avg Occupancy
-        protected double [] AggregatedTotLanes; // Total lanes
-        protected double [] ThresholdLow; // Aggregated low thresholds [left, through, right]
-        protected double [] ThresholdHigh;// Aggregated high thresholds [left, through, right]
-    }
-
-    // ***********************Queue thresholds*******************************
-    public static class QueueThresholdByMovement{
-        // Queue thresholds for each movement
-        public QueueThresholdByMovement(double _QueueToAdvance,double _QueueWithMaxGreen, double _QueueToEnd){
-            this.QueueToAdvance=_QueueToAdvance;
-            this.QueueWithMaxGreen=_QueueWithMaxGreen;
-            this.QueueToEnd=_QueueToEnd;
-        }
-        protected double QueueToAdvance;
-        protected double QueueWithMaxGreen;
-        protected double QueueToEnd;
-
-        public double getQueueToAdvance() {
-            return QueueToAdvance;
-        }
-
-        public double getQueueToEnd() {
-            return QueueToEnd;
-        }
-
-        public double getQueueWithMaxGreen() {
-            return QueueWithMaxGreen;
-        }
-    }
-
-    public static class QueueThreshold{
-        // Queue thresholds for three movements
-        public QueueThreshold(QueueThresholdByMovement _QueueThresholdLeft, QueueThresholdByMovement _QueueThresholdThrough
-                ,QueueThresholdByMovement _QueueThresholdRight){
-            this.QueueThresholdLeft=_QueueThresholdLeft;
-            this.QueueThresholdThrough=_QueueThresholdThrough;
-            this.QueueThresholdRight=_QueueThresholdRight;
-        }
-        protected QueueThresholdByMovement QueueThresholdLeft;
-        protected QueueThresholdByMovement QueueThresholdThrough;
-        protected QueueThresholdByMovement QueueThresholdRight;
-
-        public QueueThresholdByMovement getQueueThresholdLeft() {
-            return QueueThresholdLeft;
-        }
-
-        public QueueThresholdByMovement getQueueThresholdRight() {
-            return QueueThresholdRight;
-        }
-
-        public QueueThresholdByMovement getQueueThresholdThrough() {
-            return QueueThresholdThrough;
-        }
-    }
-
-    public static class AssessmentStateAndQueue{
-        // Assessment of state and queue
-        public AssessmentStateAndQueue(String [] _StatusAssessment,int [] _QueueAssessment){
-            this.StatusAssessment=_StatusAssessment;
-            this.QueueAssessment=_QueueAssessment;
-        }
-        protected String[] StatusAssessment;
-        protected int[] QueueAssessment;
-
-        public int[] getQueueAssessment() {
-            return QueueAssessment;
-        }
-
-        public String[] getStatusAssessment() {
-            return StatusAssessment;
-        }
-    }
-
-    public static class AssessmentStateAndQueueByMovement{
-        // Assessment of state and queue by movement: left-turn, through, and right-turn
-        public AssessmentStateAndQueueByMovement(String _StatusAssessment,int _QueueAssessment){
-            this.StatusAssessment=_StatusAssessment;
-            this.QueueAssessment=_QueueAssessment;
-        }
-        protected String StatusAssessment;
-        protected int QueueAssessment;
-    }
-
-    // ********************************************************************
     // ***********************Main functions*******************************
     // ********************************************************************
-
     /**
      *
      * @param con Database connection
@@ -626,9 +52,9 @@ public class trafficStateEstimation {
 
             // *****************Update the parameter settings******************
             // Update turning proportions
-            parameters.turningProportion=UpdateVehicleProportions(parameters.turningProportion,con,aimsunApproach, queryMeasures);
-            parameters.turningProportion=UpdateVehicleProportionsAccordingToLandIndicator(parameters.turningProportion
-                    ,aimsunApproach.getGeoDesign().getTurnIndicator());
+            parameters.setTurningProportion(UpdateVehicleProportions(parameters.getTurningProportion(),con,aimsunApproach, queryMeasures));
+            parameters.setTurningProportion(UpdateVehicleProportionsAccordingToLandIndicator(parameters.getTurningProportion()
+                    ,aimsunApproach.getGeoDesign().getTurnIndicator()));
 
             // Update saturation speeds
             parameters=UpdateSaturationSpeeds(parameters,aimsunApproach);
@@ -658,7 +84,8 @@ public class trafficStateEstimation {
      * @param trafficState TrafficStateByApproach class
      * @return TrafficStateByApproach class
      */
-    public static TrafficStateByApproach AssessmentStateAndQueue(AimsunApproach aimsunApproach,Parameters parameters,TrafficStateByApproach trafficState){
+    public static TrafficStateByApproach AssessmentStateAndQueue(AimsunApproach aimsunApproach,Parameters parameters
+            ,TrafficStateByApproach trafficState){
         // This function is used to get the assessment of state and queue
         String [] StatusAssessment;
         int [] QueueAssessment;
@@ -676,14 +103,14 @@ public class trafficStateEstimation {
             DetectorTypeByMovement ExclusiveLeft=new DetectorTypeByMovement(new String [] {"Left Turn","Left Turn Queue"},
                     new String []{}, new String []{}); // Exclusive left turn
             AggregatedTrafficStates aggregatedTrafficStatesLeft=CheckAggregatedStateForTrafficMovements(
-                    aimsunApproach.getDetectorProperty().getExclusiveLeftTurn(),ExclusiveLeft, trafficState.ExclusiveLeftTurnDetectors,
+                    aimsunApproach.getDetectorProperty().getExclusiveLeftTurn(),ExclusiveLeft, trafficState.getExclusiveLeftTurnDetectors(),
                     "Exclusive Left Turn",parameters);
 
             // For exclusive right turns
             DetectorTypeByMovement ExclusiveRight=new DetectorTypeByMovement(new String []{}, new String []{},
                     new String [] {"Right Turn","Right Turn Queue"}); // Exclusive right turn
             AggregatedTrafficStates aggregatedTrafficStatesRight=CheckAggregatedStateForTrafficMovements(
-                    aimsunApproach.getDetectorProperty().getExclusiveRightTurn(),ExclusiveRight, trafficState.ExclusiveRightTurnDetectors,
+                    aimsunApproach.getDetectorProperty().getExclusiveRightTurn(),ExclusiveRight, trafficState.getExclusiveRightTurnDetectors(),
                     "Exclusive Right Turn",parameters);
 
             // For general detectors
@@ -692,7 +119,7 @@ public class trafficStateEstimation {
                     new String []{"All Movements","Through","Left and Through","Through and Right"}, //Through
                     new String []{"All Movements","Left and Right","Through and Right"}); // Right turn
             AggregatedTrafficStates aggregatedTrafficStatesGeneral=CheckAggregatedStateForTrafficMovements(
-                    aimsunApproach.getDetectorProperty().getGeneralStopbarDetectors(),GeneralDetector, trafficState.GeneralStopbarDetectors,
+                    aimsunApproach.getDetectorProperty().getGeneralStopbarDetectors(),GeneralDetector, trafficState.getGeneralStopbarDetectors(),
                     "General Stopbar Detectors",parameters);
 
             // For Advance detectors
@@ -701,7 +128,7 @@ public class trafficStateEstimation {
                     new String []{"Advance","Advance Through","Advance Through and Right","Advance Left and Through"}, // Through
                     new String []{"Advance","Advance Right Turn","Advance Through and Right","Advance Left and Right"}); // Right turn
             AggregatedTrafficStates aggregatedTrafficStatesAdvance=CheckAggregatedStateForTrafficMovements(
-                    aimsunApproach.getDetectorProperty().getAdvanceDetectors(),AdvanceDetector, trafficState.AdvanceDetectors,
+                    aimsunApproach.getDetectorProperty().getAdvanceDetectors(),AdvanceDetector, trafficState.getAdvanceDetectors(),
                     "Advance Detectors",parameters);
 
             // Get the queue thresholds for different traffic movements
@@ -710,12 +137,12 @@ public class trafficStateEstimation {
             // Get the assessment of states and queues
             AssessmentStateAndQueue assessmentStateAndQueue=MakeADecision(aggregatedTrafficStatesAdvance,aggregatedTrafficStatesGeneral,aggregatedTrafficStatesLeft
                     , aggregatedTrafficStatesRight,aimsunApproach.getGeoDesign().getTurnIndicator(),queueThreshold);
-            StatusAssessment=assessmentStateAndQueue.StatusAssessment;
-            QueueAssessment=assessmentStateAndQueue.QueueAssessment;
+            StatusAssessment=assessmentStateAndQueue.getStatusAssessment();
+            QueueAssessment=assessmentStateAndQueue.getQueueAssessment();
         }
-        trafficState.queueThreshold=queueThreshold;
-        trafficState.StateByMovement=StatusAssessment;
-        trafficState.QueueByMovement=QueueAssessment;
+        trafficState.setQueueThreshold(queueThreshold);
+        trafficState.setStateByMovement(StatusAssessment);
+        trafficState.setQueueByMovement(QueueAssessment);
         return trafficState;
     }
 
@@ -740,13 +167,13 @@ public class trafficStateEstimation {
         if(detectorMovementProperties.size()>0) {
             int NumType = detectorMovementProperties.size();
             // Check left-turn movement
-            double [] RateOCCLanesLeft=CheckAggregatedStateIndividualMovement(NumType, detectorTypeByMovement.Left
+            double [] RateOCCLanesLeft=CheckAggregatedStateIndividualMovement(NumType, detectorTypeByMovement.getLeft()
                     ,detectorMovementProperties, trafficStateByDetectorGroups, parameters, "Left",DetectorGroup);
             // Check through movement
-            double [] RateOCCLanesThrough=CheckAggregatedStateIndividualMovement(NumType, detectorTypeByMovement.Through
+            double [] RateOCCLanesThrough=CheckAggregatedStateIndividualMovement(NumType, detectorTypeByMovement.getThrough()
                     ,detectorMovementProperties, trafficStateByDetectorGroups, parameters, "Through",DetectorGroup);
             // Check right-turn movement
-            double [] RateOCCLanesRight=CheckAggregatedStateIndividualMovement(NumType, detectorTypeByMovement.Right
+            double [] RateOCCLanesRight=CheckAggregatedStateIndividualMovement(NumType, detectorTypeByMovement.getRight()
                     ,detectorMovementProperties, trafficStateByDetectorGroups, parameters, "Right",DetectorGroup);
 
             double [] Rates=new double[]{RateOCCLanesLeft[0],RateOCCLanesThrough[0],RateOCCLanesRight[0]};
@@ -785,29 +212,29 @@ public class trafficStateEstimation {
             for(int j=0;j<PossibleMovement.length;j++){ // Loop for each possible detector type
                 if(PossibleMovement[j].equals(detectorMovementProperties.get(i).getMovement())){
                     // Find the corresponding movement
-                    if(!trafficStateByDetectorGroups.get(i).Rate.equals("Unkonwn")){
+                    if(!trafficStateByDetectorGroups.get(i).getRate().equals("Unkonwn")){
                         // Get the proportions
                         double Proportion=FindTrafficProportion(detectorMovementProperties.get(i).getMovement(),
                                 parameters,Movement);
 
                         if(DetectorGroup.equals("Exclusive Left Turn")||DetectorGroup.equals("Exclusive Right Turn")
                                 ||DetectorGroup.equals("General Stopbar Detectors")) {
-                            Rate = Rate + RateToNumberStopbar(trafficStateByDetectorGroups.get(i).Rate) *
-                                    trafficStateByDetectorGroups.get(i).TotLanes * Proportion;
+                            Rate = Rate + RateToNumberStopbar(trafficStateByDetectorGroups.get(i).getRate()) *
+                                    trafficStateByDetectorGroups.get(i).getTotLanes() * Proportion;
                         }else if(DetectorGroup.equals("Advance Detectors")){
-                            Rate = Rate + RateToNumberAdvance(trafficStateByDetectorGroups.get(i).Rate) *
-                                    trafficStateByDetectorGroups.get(i).TotLanes * Proportion;
+                            Rate = Rate + RateToNumberAdvance(trafficStateByDetectorGroups.get(i).getRate()) *
+                                    trafficStateByDetectorGroups.get(i).getTotLanes() * Proportion;
                         }else{
                             System.out.println("Wrong input of detector group!");
                             System.exit(-1);
                         }
 
-                        Occ=Occ+trafficStateByDetectorGroups.get(i).AvgOcc*trafficStateByDetectorGroups.get(i).TotLanes
+                        Occ=Occ+trafficStateByDetectorGroups.get(i).getAvgOcc()*trafficStateByDetectorGroups.get(i).getTotLanes()
                                 *Proportion;
-                        TotLanes=TotLanes+trafficStateByDetectorGroups.get(i).TotLanes*Proportion;
+                        TotLanes=TotLanes+trafficStateByDetectorGroups.get(i).getTotLanes()*Proportion;
                         NumMatchedDetectorMovement=NumMatchedDetectorMovement+1;
-                        ThresholdLow=ThresholdLow+trafficStateByDetectorGroups.get(i).Thresholds[0];
-                        ThresholdHigh=ThresholdHigh+trafficStateByDetectorGroups.get(i).Thresholds[1];
+                        ThresholdLow=ThresholdLow+trafficStateByDetectorGroups.get(i).getThresholds()[0];
+                        ThresholdHigh=ThresholdHigh+trafficStateByDetectorGroups.get(i).getThresholds()[1];
                     }
                     break;
                 }
@@ -945,11 +372,11 @@ public class trafficStateEstimation {
                     ((double)aimsunApproach.getGeoDesign().getNumOfUpstreamLanes())/TotUpstreamLane;
         }
         if(DistanceToAdvanceDetector==0) {// No Advance detectors, use the default value
-            DistanceToAdvanceDetector = parameters.intersectionParams.DistanceAdvanceDetector;
+            DistanceToAdvanceDetector = parameters.getIntersectionParams().getDistanceAdvanceDetector();
         }
 
         // Determine the queue threshold for left-turn, through, and right-turn movements
-        double NumJamVehPerLane=5280/parameters.vehicleParams.JamSpacing;
+        double NumJamVehPerLane=5280/parameters.getVehicleParams().getJamSpacing();
         QueueThresholdByMovement queueThresholdLeft=CalculateQueueThresholdsForMovement(NumExclusiveLTLanes,LanePortionByMovementAdvance
             , LanePortionByMovement, NumJamVehPerLane, LTPocket, DistanceToAdvanceDetector,aimsunApproach, parameters,"Left");
         QueueThresholdByMovement queueThresholdRight=CalculateQueueThresholdsForMovement(NumExclusiveRTLanes,LanePortionByMovementAdvance
@@ -997,18 +424,18 @@ public class trafficStateEstimation {
         double GreenTime=0;
         if(Movement.equals("Left")){
             Index=0;
-            GreenTime=parameters.signalSettings.LeftTurnGreen;
+            GreenTime=parameters.getSignalSettings().getLeftTurnGreen();
         }else if(Movement.equals("Through")){
             Index=1;
-            GreenTime=parameters.signalSettings.ThroughGreen;
+            GreenTime=parameters.getSignalSettings().getThroughGreen();
         }else if(Movement.equals("Right")){
             Index=2;
-            GreenTime=parameters.signalSettings.RightTurnGreen;
+            GreenTime=parameters.getSignalSettings().getRightTurnGreen();
         }else{
             System.out.println("Wrong input of movement type!");
             System.exit(-1);
         }
-        double VehicleHeadway=parameters.intersectionParams.SaturationHeadway;
+        double VehicleHeadway=parameters.getIntersectionParams().getSaturationHeadway();
         double VehiclePassageAtMaxGreen=GreenTime/VehicleHeadway;
 
         // **********Rescale the lane proportion for the movement************
@@ -1080,43 +507,43 @@ public class trafficStateEstimation {
         int [] QueueAssessment;
 
         // Get the states for left-turn, through, and right-turn movements
-        double [] AdvanceRate=aggregatedTrafficStatesAdvance.AggregatedStatus;
-        double [] GeneralRate=aggregatedTrafficStatesGeneral.AggregatedStatus;
-        double [] ExclusiveLeftRate=aggregatedTrafficStatesLeft.AggregatedStatus;
-        double [] ExclusiveRightRate=aggregatedTrafficStatesRight.AggregatedStatus;
+        double [] AdvanceRate=aggregatedTrafficStatesAdvance.getAggregatedStatus();
+        double [] GeneralRate=aggregatedTrafficStatesGeneral.getAggregatedStatus();
+        double [] ExclusiveLeftRate=aggregatedTrafficStatesLeft.getAggregatedStatus();
+        double [] ExclusiveRightRate=aggregatedTrafficStatesRight.getAggregatedStatus();
 
         double DownstreamStatusLeft=MeanWithoutZero(new double[]{ExclusiveLeftRate[0],GeneralRate[0]});
         double AdvanceStatusLeft=AdvanceRate[0];
         double [] DownstreamOccAndThresholdLeft=GetDownstreamAvgOccAndThresholdByMovement(aggregatedTrafficStatesGeneral,aggregatedTrafficStatesLeft
                 , aggregatedTrafficStatesRight,"Left");
         double [] UpstreamOccAndThresholdLeft;
-        if(aggregatedTrafficStatesAdvance.AggregatedStatus[0]>0){
-            UpstreamOccAndThresholdLeft=new double[]{aggregatedTrafficStatesAdvance.AvgOccupancy[0],aggregatedTrafficStatesAdvance.ThresholdLow[0],
-                    aggregatedTrafficStatesAdvance.ThresholdHigh[0]};
+        if(aggregatedTrafficStatesAdvance.getAggregatedStatus()[0]>0){
+            UpstreamOccAndThresholdLeft=new double[]{aggregatedTrafficStatesAdvance.getAvgOccupancy()[0],
+                    aggregatedTrafficStatesAdvance.getThresholdLow()[0], aggregatedTrafficStatesAdvance.getThresholdHigh()[0]};
         }else{
             UpstreamOccAndThresholdLeft=new double[]{0,0,0};
         }
 
         double DownstreamStatusThrough=GeneralRate[1];
         double AdvanceStatusThrough=AdvanceRate[1];
-        double [] DownstreamOccAndThresholdThrough=GetDownstreamAvgOccAndThresholdByMovement(aggregatedTrafficStatesGeneral,aggregatedTrafficStatesLeft
-                , aggregatedTrafficStatesRight,"Through");
+        double [] DownstreamOccAndThresholdThrough=GetDownstreamAvgOccAndThresholdByMovement(aggregatedTrafficStatesGeneral
+                ,aggregatedTrafficStatesLeft, aggregatedTrafficStatesRight,"Through");
         double [] UpstreamOccAndThresholdThrough;
-        if(aggregatedTrafficStatesAdvance.AggregatedStatus[1]>0){
-            UpstreamOccAndThresholdThrough=new double[]{aggregatedTrafficStatesAdvance.AvgOccupancy[1],aggregatedTrafficStatesAdvance.ThresholdLow[1],
-                    aggregatedTrafficStatesAdvance.ThresholdHigh[1]};
+        if(aggregatedTrafficStatesAdvance.getAggregatedStatus()[1]>0){
+            UpstreamOccAndThresholdThrough=new double[]{aggregatedTrafficStatesAdvance.getAvgOccupancy()[1]
+                    ,aggregatedTrafficStatesAdvance.getThresholdLow()[1],aggregatedTrafficStatesAdvance.getThresholdHigh()[1]};
         }else{
             UpstreamOccAndThresholdThrough=new double[]{0,0,0};
         }
 
         double DownstreamstatusRight=MeanWithoutZero(new double[]{ExclusiveRightRate[2],GeneralRate[2]});
         double AdvanceStatusRight=AdvanceRate[2];
-        double [] DownstreamOccAndThresholdRight=GetDownstreamAvgOccAndThresholdByMovement(aggregatedTrafficStatesGeneral,aggregatedTrafficStatesLeft
-                , aggregatedTrafficStatesRight,"Right");
+        double [] DownstreamOccAndThresholdRight=GetDownstreamAvgOccAndThresholdByMovement(aggregatedTrafficStatesGeneral
+                ,aggregatedTrafficStatesLeft, aggregatedTrafficStatesRight,"Right");
         double [] UpstreamOccAndThresholdRight;
-        if(aggregatedTrafficStatesAdvance.AggregatedStatus[2]>0){
-            UpstreamOccAndThresholdRight=new double[]{aggregatedTrafficStatesAdvance.AvgOccupancy[2],aggregatedTrafficStatesAdvance.ThresholdLow[2],
-                    aggregatedTrafficStatesAdvance.ThresholdHigh[2]};
+        if(aggregatedTrafficStatesAdvance.getAggregatedStatus()[2]>0){
+            UpstreamOccAndThresholdRight=new double[]{aggregatedTrafficStatesAdvance.getAvgOccupancy()[2],
+                    aggregatedTrafficStatesAdvance.getThresholdLow()[2], aggregatedTrafficStatesAdvance.getThresholdHigh()[2]};
         }else{
             UpstreamOccAndThresholdRight=new double[]{0,0,0};
         }
@@ -1155,10 +582,10 @@ public class trafficStateEstimation {
         AssessmentStateAndQueueByMovement assessmentStateAndQueueRight=DecideStatusQueueForMovement(Blockage, queueThreshold, DownstreamstatusRight
                 , AdvanceStatusRight,DownstreamOccAndThresholdRight, UpstreamOccAndThresholdRight, "Right");
 
-        StatusAssessment=new String[]{assessmentStateAndQueueLeft.StatusAssessment,assessmentStateAndQueueThrough.StatusAssessment,
-                assessmentStateAndQueueRight.StatusAssessment};
-        QueueAssessment=new int[]{assessmentStateAndQueueLeft.QueueAssessment,assessmentStateAndQueueThrough.QueueAssessment,
-                assessmentStateAndQueueRight.QueueAssessment};
+        StatusAssessment=new String[]{assessmentStateAndQueueLeft.getStatusAssessment(),assessmentStateAndQueueThrough.getStatusAssessment(),
+                assessmentStateAndQueueRight.getStatusAssessment()};
+        QueueAssessment=new int[]{assessmentStateAndQueueLeft.getQueueAssessment(),assessmentStateAndQueueThrough.getQueueAssessment(),
+                assessmentStateAndQueueRight.getQueueAssessment()};
 
         // Update when no such a movement
         for (int i=0;i<TurnIndicator.length;i++){
@@ -1195,19 +622,19 @@ public class trafficStateEstimation {
         double QueueToAdvance=0;
         if(Movement.equals("Left")){
             Blockage[0]=0; // Set it zero, only check other movements
-            QueueToAdvance=queueThreshold.QueueThresholdLeft.QueueToAdvance;
-            QueueWithMaxGreen=queueThreshold.QueueThresholdLeft.QueueWithMaxGreen;
-            QueueToEnd=queueThreshold.QueueThresholdLeft.QueueToEnd;
+            QueueToAdvance=queueThreshold.getQueueThresholdLeft().getQueueToAdvance();
+            QueueWithMaxGreen=queueThreshold.getQueueThresholdLeft().getQueueWithMaxGreen();
+            QueueToEnd=queueThreshold.getQueueThresholdLeft().getQueueToEnd();
         }else if(Movement.equals("Through")){
             Blockage[1]=0; // Set it zero, only check other movements
-            QueueToAdvance=queueThreshold.QueueThresholdThrough.QueueToAdvance;
-            QueueWithMaxGreen=queueThreshold.QueueThresholdThrough.QueueWithMaxGreen;
-            QueueToEnd=queueThreshold.QueueThresholdThrough.QueueToEnd;
+            QueueToAdvance=queueThreshold.getQueueThresholdThrough().getQueueToAdvance();
+            QueueWithMaxGreen=queueThreshold.getQueueThresholdThrough().getQueueWithMaxGreen();
+            QueueToEnd=queueThreshold.getQueueThresholdThrough().getQueueToEnd();
         }else if(Movement.equals("Right")){
             Blockage[2]=0; // Set it zero, only check other movements
-            QueueToAdvance=queueThreshold.QueueThresholdRight.QueueToAdvance;
-            QueueWithMaxGreen=queueThreshold.QueueThresholdRight.QueueWithMaxGreen;
-            QueueToEnd=queueThreshold.QueueThresholdRight.QueueToEnd;
+            QueueToAdvance=queueThreshold.getQueueThresholdRight().getQueueToAdvance();
+            QueueWithMaxGreen=queueThreshold.getQueueThresholdRight().getQueueWithMaxGreen();
+            QueueToEnd=queueThreshold.getQueueThresholdRight().getQueueToEnd();
         }else{
             System.out.println("Wrong input of movements!");
             System.exit(-1);
@@ -1303,25 +730,25 @@ public class trafficStateEstimation {
         double TotLanes=0;
         double ThresholdLow=0;
         double ThresholdHigh=0;
-        if(aggregatedTrafficStatesLeft.AggregatedStatus[Index]>0){
-            AvgOcc=AvgOcc+aggregatedTrafficStatesLeft.AvgOccupancy[Index];
-            TotLanes=TotLanes+aggregatedTrafficStatesLeft.AggregatedTotLanes[Index];
-            ThresholdLow=ThresholdLow+aggregatedTrafficStatesLeft.ThresholdLow[Index];
-            ThresholdHigh=ThresholdHigh+aggregatedTrafficStatesLeft.ThresholdHigh[Index];
+        if(aggregatedTrafficStatesLeft.getAggregatedStatus()[Index]>0){
+            AvgOcc=AvgOcc+aggregatedTrafficStatesLeft.getAvgOccupancy()[Index];
+            TotLanes=TotLanes+aggregatedTrafficStatesLeft.getAggregatedTotLanes()[Index];
+            ThresholdLow=ThresholdLow+aggregatedTrafficStatesLeft.getThresholdLow()[Index];
+            ThresholdHigh=ThresholdHigh+aggregatedTrafficStatesLeft.getThresholdHigh()[Index];
         }
 
-        if(aggregatedTrafficStatesGeneral.AggregatedStatus[Index]>0){
-            AvgOcc=AvgOcc+aggregatedTrafficStatesGeneral.AvgOccupancy[Index];
-            TotLanes=TotLanes+aggregatedTrafficStatesGeneral.AggregatedTotLanes[Index];
-            ThresholdLow=ThresholdLow+aggregatedTrafficStatesGeneral.ThresholdLow[Index];
-            ThresholdHigh=ThresholdHigh+aggregatedTrafficStatesGeneral.ThresholdHigh[Index];
+        if(aggregatedTrafficStatesGeneral.getAggregatedStatus()[Index]>0){
+            AvgOcc=AvgOcc+aggregatedTrafficStatesGeneral.getAvgOccupancy()[Index];
+            TotLanes=TotLanes+aggregatedTrafficStatesGeneral.getAggregatedTotLanes()[Index];
+            ThresholdLow=ThresholdLow+aggregatedTrafficStatesGeneral.getThresholdLow()[Index];
+            ThresholdHigh=ThresholdHigh+aggregatedTrafficStatesGeneral.getThresholdHigh()[Index];
         }
 
-        if(aggregatedTrafficStatesRight.AggregatedStatus[Index]>0){
-            AvgOcc=AvgOcc+aggregatedTrafficStatesRight.AvgOccupancy[Index];
-            TotLanes=TotLanes+aggregatedTrafficStatesRight.AggregatedTotLanes[Index];
-            ThresholdLow=ThresholdLow+aggregatedTrafficStatesRight.ThresholdLow[Index];
-            ThresholdHigh=ThresholdHigh+aggregatedTrafficStatesRight.ThresholdHigh[Index];
+        if(aggregatedTrafficStatesRight.getAggregatedStatus()[Index]>0){
+            AvgOcc=AvgOcc+aggregatedTrafficStatesRight.getAvgOccupancy()[Index];
+            TotLanes=TotLanes+aggregatedTrafficStatesRight.getAggregatedTotLanes()[Index];
+            ThresholdLow=ThresholdLow+aggregatedTrafficStatesRight.getThresholdLow()[Index];
+            ThresholdHigh=ThresholdHigh+aggregatedTrafficStatesRight.getThresholdHigh()[Index];
         }
 
         double [] DownstreamAvgOccAndThreshold;
@@ -1376,7 +803,7 @@ public class trafficStateEstimation {
         // This function is used to make decision for traffic states at different types of detectors (By "Detector", not By "Movement")
 
         // Get the end time of the query measures
-        int Time=queryMeasures.TimeOfDay[1];
+        int Time=queryMeasures.getTimeOfDay()[1];
         // Get traffic states
         List<TrafficStateByDetectorType> ExclusiveLeftTurnDetectors=GetTrafficState(con,
                 aimsunApproach.getDetectorProperty().getExclusiveLeftTurn(), queryMeasures,parameters, "Exclusive Left Turn");
@@ -1495,8 +922,8 @@ public class trafficStateEstimation {
         }
 
         // Return the traffic states
-        TrafficStateByDetectorType trafficStateByDetectorGroup=new TrafficStateByDetectorType(DetectorType,thresholdAndRate.Rate,
-                thresholdAndRate.Thresholds,AvgOcc, AvgFlow,TotalLanes,Occupancies,Flows);
+        TrafficStateByDetectorType trafficStateByDetectorGroup=new TrafficStateByDetectorType(DetectorType,thresholdAndRate.getRate(),
+                thresholdAndRate.getThresholds(),AvgOcc, AvgFlow,TotalLanes,Occupancies,Flows);
         return trafficStateByDetectorGroup;
     }
 
@@ -1512,20 +939,20 @@ public class trafficStateEstimation {
         // This function is used to get the rate at Advance detectors
 
         // Get the maximum green ratio given the detector group
-        double GreenTime=Math.max(parameters.signalSettings.LeftTurnGreen,
-                Math.max(parameters.signalSettings.ThroughGreen,parameters.signalSettings.RightTurnGreen));
+        double GreenTime=Math.max(parameters.getSignalSettings().getLeftTurnGreen(),
+                Math.max(parameters.getSignalSettings().getThroughGreen(),parameters.getSignalSettings().getRightTurnGreen()));
 
         // Get the start-up lost time, and saturation headway
-        double StartUpLostTime=parameters.vehicleParams.StartupLostTime;
-        double SaturationHeadway=parameters.intersectionParams.SaturationHeadway;
+        double StartUpLostTime=parameters.getVehicleParams().getStartupLostTime();
+        double SaturationHeadway=parameters.getIntersectionParams().getSaturationHeadway();
 
         // Get the saturation speeds for different movements: Use the speed for through movements
-        double SaturationSpeedThrough=parameters.intersectionParams.SaturationSpeedThrough;
+        double SaturationSpeedThrough=parameters.getIntersectionParams().getSaturationSpeedThrough();
         double SaturationSpeedLeft=SaturationSpeedThrough;
         double SaturationSpeedRight=SaturationSpeedThrough;
 
         // Get the vehicle length
-        double VehLength= parameters.vehicleParams.VehicleLength;
+        double VehLength= parameters.getVehicleParams().getVehicleLength();
 
         // Time for a vehicle passing a detector for different movements (in seconds)
         double PassTimeThrough=(VehLength+DetLength)*3600/SaturationSpeedThrough/5280;
@@ -1549,9 +976,9 @@ public class trafficStateEstimation {
                 +PassTimeRight*NumVehRight;
 
         // Get the occupancy thresholds: red time & discharging time
-        double OccThresholdLow=100*Math.min(1.0,DischargingTime/parameters.signalSettings.CycleLength);
-        double OccThresholdHigh=100*Math.min(1.0, DischargingTime/parameters.signalSettings.CycleLength+
-                (1-GreenTime/parameters.signalSettings.CycleLength));
+        double OccThresholdLow=100*Math.min(1.0,DischargingTime/parameters.getSignalSettings().getCycleLength());
+        double OccThresholdHigh=100*Math.min(1.0, DischargingTime/parameters.getSignalSettings().getCycleLength()+
+                (1-GreenTime/parameters.getSignalSettings().getCycleLength()));
 
         // We have three categories for Advance detectors
         // Using occupancy is good because it can respresent either a lane or a road network
@@ -1583,27 +1010,27 @@ public class trafficStateEstimation {
         // Get the green ratio given the detector group
         double GreenTime=0;
         if(DetectorType.equals("Left Turn") || DetectorType.equals("Left Turn Queue")) {
-            GreenTime = parameters.signalSettings.LeftTurnGreen;
+            GreenTime = parameters.getSignalSettings().getLeftTurnGreen();
         }
         else if(DetectorType.equals("Right Turn")|| DetectorType.equals("Right Turn Queue")){
-            GreenTime=parameters.signalSettings.RightTurnGreen;
+            GreenTime=parameters.getSignalSettings().getRightTurnGreen();
         }
         else
         {
-            GreenTime=parameters.signalSettings.ThroughGreen;
+            GreenTime=parameters.getSignalSettings().getThroughGreen();
         }
 
         // Get the start-up lost time, and saturation headway
-        double StartUpLostTime=parameters.vehicleParams.StartupLostTime;
-        double SaturationHeadway=parameters.intersectionParams.SaturationHeadway;
+        double StartUpLostTime=parameters.getVehicleParams().getStartupLostTime();
+        double SaturationHeadway=parameters.getIntersectionParams().getSaturationHeadway();
 
         // Get the saturation speeds for different movements
-        double SaturationSpeedLeft=parameters.intersectionParams.SaturationSpeedLeft;
-        double SaturationSpeedRight=parameters.intersectionParams.SaturationSpeedRight;
-        double SaturationSpeedThrough=parameters.intersectionParams.SaturationSpeedThrough;
+        double SaturationSpeedLeft=parameters.getIntersectionParams().getSaturationSpeedLeft();
+        double SaturationSpeedRight=parameters.getIntersectionParams().getSaturationSpeedRight();
+        double SaturationSpeedThrough=parameters.getIntersectionParams().getSaturationSpeedThrough();
 
         // Get the vehicle length
-        double VehLength= parameters.vehicleParams.VehicleLength;
+        double VehLength= parameters.getVehicleParams().getVehicleLength();
 
         // Time for a vehicle passing a detector for different movements (in seconds)
         double PassTimeLeft=(VehLength+DetLength)*3600/SaturationSpeedLeft/5280;
@@ -1626,9 +1053,9 @@ public class trafficStateEstimation {
         double DischargingTime=StartUpLostTime+PassTimeLeft*NumVehLeft+PassTimeThrough*NumVehThrough+PassTimeRight*NumVehRight;
 
         // Get the occupancy threshold: red time + discharging time
-        double OccThresholdLow=100*Math.min(1.0,DischargingTime/parameters.signalSettings.CycleLength);
-        double OccThresholdHigh=100*Math.min(1.0, DischargingTime/parameters.signalSettings.CycleLength+
-                (1-GreenTime/parameters.signalSettings.CycleLength));
+        double OccThresholdLow=100*Math.min(1.0,DischargingTime/parameters.getSignalSettings().getCycleLength());
+        double OccThresholdHigh=100*Math.min(1.0, DischargingTime/parameters.getSignalSettings().getCycleLength()+
+                (1-GreenTime/parameters.getSignalSettings().getCycleLength()));
 
         // We only have two categories for stopbar detectors: Queue spillback or no queue spillback
         String Rate;
@@ -1674,51 +1101,51 @@ public class trafficStateEstimation {
         // Find the corresponding proportions
         double Proportion=0;
         if(DetectorType.equals("Left Turn")){
-            Proportion=parameters.turningProportion.LeftTurn[Index];
+            Proportion=parameters.getTurningProportion().getLeftTurn()[Index];
         }else if(DetectorType.equals("Left Turn Queue")){
-            Proportion=parameters.turningProportion.LeftTurnQueue[Index];
+            Proportion=parameters.getTurningProportion().getLeftTurnQueue()[Index];
         }
         else if(DetectorType.equals("Right Turn")){
-            Proportion=parameters.turningProportion.RightTurn[Index];
+            Proportion=parameters.getTurningProportion().getRightTurn()[Index];
         }
         else if(DetectorType.equals("Right Turn Queue")){
-            Proportion=parameters.turningProportion.RightTurnQueue[Index];
+            Proportion=parameters.getTurningProportion().getRightTurnQueue()[Index];
         }
         else if(DetectorType.equals("Advance")){
-            Proportion=parameters.turningProportion.Advance[Index];
+            Proportion=parameters.getTurningProportion().getAdvance()[Index];
         }
         else if(DetectorType.equals("Advance Left Turn")){
-            Proportion=parameters.turningProportion.AdvanceLeftTurn[Index];
+            Proportion=parameters.getTurningProportion().getAdvanceLeftTurn()[Index];
         }
         else if(DetectorType.equals("Advance Right Turn")){
-            Proportion=parameters.turningProportion.AdvanceRightTurn[Index];
+            Proportion=parameters.getTurningProportion().getAdvanceRightTurn()[Index];
         }
         else if(DetectorType.equals("Advance Through")){
-            Proportion=parameters.turningProportion.AdvanceThrough[Index];
+            Proportion=parameters.getTurningProportion().getAdvanceThrough()[Index];
         }
         else if(DetectorType.equals("Advance Through and Right")){
-            Proportion=parameters.turningProportion.AdvanceThroughAndRight[Index];
+            Proportion=parameters.getTurningProportion().getAdvanceThroughAndRight()[Index];
         }
         else if(DetectorType.equals("Advance Left and Through")){
-            Proportion=parameters.turningProportion.AdvanceLeftAndThrough[Index];
+            Proportion=parameters.getTurningProportion().getAdvanceLeftAndThrough()[Index];
         }
         else if(DetectorType.equals("Advance Left and Right")){
-            Proportion=parameters.turningProportion.AdvanceLeftAndRight[Index];
+            Proportion=parameters.getTurningProportion().getAdvanceLeftAndRight()[Index];
         }
         else if(DetectorType.equals("All Movements")){
-            Proportion=parameters.turningProportion.AllMovements[Index];
+            Proportion=parameters.getTurningProportion().getAllMovements()[Index];
         }
         else if(DetectorType.equals("Through")){
-            Proportion=parameters.turningProportion.Through[Index];
+            Proportion=parameters.getTurningProportion().getThrough()[Index];
         }
         else if(DetectorType.equals("Left and Right")){
-            Proportion=parameters.turningProportion.LeftAndRight[Index];
+            Proportion=parameters.getTurningProportion().getLeftAndRight()[Index];
         }
         else if(DetectorType.equals("Left and Through")){
-            Proportion=parameters.turningProportion.LeftAndThrough[Index];
+            Proportion=parameters.getTurningProportion().getLeftAndThrough()[Index];
         }
         else if(DetectorType.equals("Through and Right")){
-            Proportion=parameters.turningProportion.ThroughAndRight[Index];
+            Proportion=parameters.getTurningProportion().getThroughAndRight()[Index];
         }else
         {
             System.out.println("Wrong input of detector movement!");
@@ -1738,15 +1165,15 @@ public class trafficStateEstimation {
 
         Double LeftTurnSpeed=GetTurningSpeedFromApproach(aimsunApproach,"Left Turn");
         if(LeftTurnSpeed>0){
-            parameters.intersectionParams.SaturationSpeedLeft=LeftTurnSpeed;
+            parameters.getIntersectionParams().setSaturationSpeedLeft(LeftTurnSpeed);
         }
         Double ThroughSpeed=GetTurningSpeedFromApproach(aimsunApproach,"Through");
         if(ThroughSpeed>0){
-            parameters.intersectionParams.SaturationSpeedThrough=ThroughSpeed;
+            parameters.getIntersectionParams().setSaturationSpeedThrough(ThroughSpeed);
         }
         Double RightTurnSpeed=GetTurningSpeedFromApproach(aimsunApproach,"Right Turn");
         if(RightTurnSpeed>0){
-            parameters.intersectionParams.SaturationSpeedRight=RightTurnSpeed;
+            parameters.getIntersectionParams().setSaturationSpeedRight(RightTurnSpeed);
         }
         return parameters;
     }
@@ -1855,7 +1282,7 @@ public class trafficStateEstimation {
                 }else{
                     // Only have left-turn values
                     ProportionThrough=(1-ProportionLeft)*
-                            turningPrortions.Advance[1]/(turningPrortions.Advance[1]+turningPrortions.Advance[2]);
+                            turningPrortions.getAdvance()[1]/(turningPrortions.getAdvance()[1]+turningPrortions.getAdvance()[2]);
                     ProportionRight=1-ProportionLeft-ProportionThrough;
                 }
             }else{
@@ -1864,7 +1291,7 @@ public class trafficStateEstimation {
                     //Have only right-turn values
                     ProportionRight=RightTurnCountsAndLanes[0]/AdvanceCountsAndLanes[0];
                     ProportionThrough=(1-ProportionRight)*
-                            turningPrortions.Advance[1]/(turningPrortions.Advance[0]+turningPrortions.Advance[1]);
+                            turningPrortions.getAdvance()[1]/(turningPrortions.getAdvance()[0]+turningPrortions.getAdvance()[1]);
                     ProportionLeft=1-ProportionRight-ProportionThrough;
                 }
             }
@@ -1872,20 +1299,20 @@ public class trafficStateEstimation {
             // Update the proportions at each type of detectors
             if(ProportionLeft+ProportionThrough+ProportionRight>0) {
                 // Update for all movements
-                turningPrortions.Advance = new double[]{ProportionLeft, ProportionThrough, ProportionRight};
-                turningPrortions.AllMovements = turningPrortions.Advance;
+                turningPrortions.setAdvance(new double[]{ProportionLeft, ProportionThrough, ProportionRight});
+                turningPrortions.setAllMovements(turningPrortions.getAdvance());
                 // Update for through and right-turns
-                turningPrortions.AdvanceThroughAndRight = new double[]{0,
-                        ProportionThrough / (ProportionThrough + ProportionRight), ProportionRight / (ProportionThrough + ProportionRight)};
-                turningPrortions.ThroughAndRight = turningPrortions.AdvanceThroughAndRight;
+                turningPrortions.setAdvanceThroughAndRight(new double[]{0,
+                        ProportionThrough / (ProportionThrough + ProportionRight), ProportionRight / (ProportionThrough + ProportionRight)});
+                turningPrortions.setThroughAndRight(turningPrortions.getAdvanceThroughAndRight());
                 // Update for left-turn and through
-                turningPrortions.AdvanceLeftAndThrough = new double[]{ProportionLeft / (ProportionThrough + ProportionLeft),
-                        ProportionThrough / (ProportionThrough + ProportionLeft), 0};
-                turningPrortions.LeftAndThrough = turningPrortions.AdvanceLeftAndThrough;
+                turningPrortions.setAdvanceLeftAndThrough(new double[]{ProportionLeft / (ProportionThrough + ProportionLeft),
+                        ProportionThrough / (ProportionThrough + ProportionLeft), 0});
+                turningPrortions.setLeftAndThrough(turningPrortions.getAdvanceLeftAndThrough());
                 // Update for left-turn and right-turn
-                turningPrortions.AdvanceLeftAndRight = new double[]{ProportionLeft / (ProportionLeft + ProportionRight), 0,
-                        ProportionRight / (ProportionLeft + ProportionRight)};
-                turningPrortions.LeftAndRight = turningPrortions.AdvanceLeftAndRight;
+                turningPrortions.setAdvanceLeftAndRight(new double[]{ProportionLeft / (ProportionLeft + ProportionRight), 0,
+                        ProportionRight / (ProportionLeft + ProportionRight)});
+                turningPrortions.setLeftAndRight(turningPrortions.getAdvanceLeftAndRight());
             }
         }
         return turningPrortions;
@@ -1901,33 +1328,33 @@ public class trafficStateEstimation {
         // This function is used to update vehicle proportions according to lane
         // indicators: only for lanes/detectors with all movements
 
-        double TPLeft=turningPrortions.Advance[0];
-        double TPThrough=turningPrortions.Advance[1];
-        double TPRight=turningPrortions.Advance[2];
+        double TPLeft=turningPrortions.getAdvance()[0];
+        double TPThrough=turningPrortions.getAdvance()[1];
+        double TPRight=turningPrortions.getAdvance()[2];
         if(LaneIndicator[0]==0 && LaneIndicator[1]==1 && LaneIndicator[2]==1 && (TPThrough+TPRight)>0){// No left turn
-            turningPrortions.Advance=new double[]{0,TPThrough+TPLeft*TPThrough/(TPThrough+TPRight)
-                    ,TPRight+TPLeft*TPRight/(TPThrough+TPRight)};
+            turningPrortions.setAdvance(new double[]{0,TPThrough+TPLeft*TPThrough/(TPThrough+TPRight)
+                    ,TPRight+TPLeft*TPRight/(TPThrough+TPRight)});
         }
         if(LaneIndicator[0]==1 && LaneIndicator[1]==0 &&LaneIndicator[2]==1 && (TPLeft+TPRight)>0){// No through
-            turningPrortions.Advance=new double[]{TPLeft+TPThrough*TPLeft/(TPLeft+TPRight),0,
-                    TPRight+TPThrough*TPRight/(TPLeft+TPRight)};
+            turningPrortions.setAdvance(new double[]{TPLeft+TPThrough*TPLeft/(TPLeft+TPRight),0,
+                    TPRight+TPThrough*TPRight/(TPLeft+TPRight)});
         }
         if(LaneIndicator[0]==1 && LaneIndicator[1]==1 &&LaneIndicator[2]==0 &&(TPLeft+TPThrough)>0){// No right turn
-            turningPrortions.Advance=new double[]{TPLeft+TPRight*TPLeft/(TPLeft+TPThrough),
-                    TPThrough+TPRight*TPThrough/(TPLeft+TPThrough),0};
+            turningPrortions.setAdvance(new double[]{TPLeft+TPRight*TPLeft/(TPLeft+TPThrough),
+                    TPThrough+TPRight*TPThrough/(TPLeft+TPThrough),0});
         }
 
         if(LaneIndicator[0]==0 && LaneIndicator[1]==0 &&LaneIndicator[2]==1){ // No left turn and through
-            turningPrortions.Advance=new double[]{0,0,1};
+            turningPrortions.setAdvance(new double[]{0,0,1});
         }
         if(LaneIndicator[0]==0 && LaneIndicator[1]==1 &&LaneIndicator[2]==0){ // No left turn and right turn
-            turningPrortions.Advance=new double[]{0,1,0};
+            turningPrortions.setAdvance(new double[]{0,1,0});
         }
         if(LaneIndicator[0]==1 && LaneIndicator[1]==0 &&LaneIndicator[2]==0){ // No through and right turn
-            turningPrortions.Advance=new double[]{1,0,0};
+            turningPrortions.setAdvance(new double[]{1,0,0});
         }
 
-        turningPrortions.AllMovements=turningPrortions.Advance;
+        turningPrortions.setAllMovements(turningPrortions.getAdvance());
         return turningPrortions;
     }
 
@@ -1946,16 +1373,16 @@ public class trafficStateEstimation {
         SignalSettings tmpSignalSettings=getSignalData.GetGreenTimesForApproachFromSignalPlansInAimsun(aimsunControlPlanJunctionList,
                 aimsunApproach);
         if(tmpSignalSettings!=null){
-            parameters.signalSettings=tmpSignalSettings;
+            parameters.setSignalSettings(tmpSignalSettings);
             // Reduce the saturation speed for permitted left turns
-            if(tmpSignalSettings.LeftTurnSetting.equals("Permitted"))
+            if(tmpSignalSettings.getLeftTurnSetting().equals("Permitted"))
                 // Reduced to 1/3
-                parameters.intersectionParams.SaturationSpeedLeft=parameters.intersectionParams.SaturationSpeedLeft*0.35;
-            else if(tmpSignalSettings.LeftTurnSetting.equals("Protected-Permitted"))
+                parameters.getIntersectionParams().setSaturationSpeedLeft(parameters.getIntersectionParams().getSaturationSpeedLeft()*0.35);
+            else if(tmpSignalSettings.getLeftTurnSetting().equals("Protected-Permitted"))
                 // Reduced to 2/3
-                parameters.intersectionParams.SaturationSpeedLeft=parameters.intersectionParams.SaturationSpeedLeft*0.7;
+                parameters.getIntersectionParams().setSaturationSpeedLeft(parameters.getIntersectionParams().getSaturationSpeedLeft()*0.7);
         }else {
-            parameters.signalSettings.LeftTurnSetting="N/A";
+            parameters.getSignalSettings().setLeftTurnSetting("N/A");
         }
         return parameters;
     }
@@ -1994,7 +1421,7 @@ public class trafficStateEstimation {
                             SelectedDetectorData selectedDetectorData =getDetectorData.getDataForGivenDetector(ps, DetectorIDs.get(j), queryMeasures);
                             if(selectedDetectorData.getDataAll()!=null){
                                 TotLanes=TotLanes+DetectorLanes.get(j);
-                                if(queryMeasures.Median==true) {//Use median?
+                                if(queryMeasures.isMedian()==true) {//Use median?
                                     TotCounts = TotCounts + selectedDetectorData.getFlowOccMid()[0];
                                 }else{// Use average?
                                     TotCounts = TotCounts + selectedDetectorData.getFlowOCCAvg()[0];
@@ -2044,7 +1471,7 @@ public class trafficStateEstimation {
                                 SelectedDetectorData selectedDetectorData =getDetectorData.getDataForGivenDetector(ps, DetectorIDs.get(j), queryMeasures);
                                 if(selectedDetectorData.getDataAll()!=null){
                                     TotLanes=TotLanes+DetectorLanes.get(j);
-                                    if(queryMeasures.Median==true) {//Use median?
+                                    if(queryMeasures.isMedian()==true) {//Use median?
                                         TotCounts = TotCounts + selectedDetectorData.getFlowOccMid()[0];
                                     }else{// Use average?
                                         TotCounts = TotCounts + selectedDetectorData.getFlowOCCAvg()[0];
@@ -2091,11 +1518,11 @@ public class trafficStateEstimation {
                         List<Integer> DetectorLanes=aimsunApproach.getDetectorProperty().getExclusiveLeftTurn().get(i).getNumberOfLanes();
                         if (DetectorIDs != null) {// If detector IDs exist
                             for (int j = 0; j < DetectorIDs.size(); j++) { // Loop for each detector
-                                getDetectorData.SelectedDetectorData selectedDetectorData =
+                                SelectedDetectorData selectedDetectorData =
                                         getDetectorData.getDataForGivenDetector(ps, DetectorIDs.get(j), queryMeasures);
                                 if(selectedDetectorData.getDataAll()!=null){
                                     TotLanes=TotLanes+DetectorLanes.get(j);
-                                    if(queryMeasures.Median==true) {//Use median?
+                                    if(queryMeasures.isMedian()==true) {//Use median?
                                         TotCounts = TotCounts + selectedDetectorData.getFlowOccMid()[0];
                                     }else{// Use average?
                                         TotCounts = TotCounts + selectedDetectorData.getFlowOCCAvg()[0];

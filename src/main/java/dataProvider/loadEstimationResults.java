@@ -1,25 +1,15 @@
 package dataProvider;
 
-import estimation.trafficStateEstimation.*;
-import gherkin.lexer.Ar;
+import commonClass.forEstimation.*;
+import commonClass.query.*;
+import commonClass.parameters.*;
 import util.util;
-
-import java.math.BigInteger;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.*;
-import java.util.*;
 
 public class loadEstimationResults {
 
@@ -143,7 +133,7 @@ public class loadEstimationResults {
         parameterString=parameterString+signalParams+";";
 
         // Construct turning proportions
-        TurningProportion turningPrortions=parameters.getTurningPrortions();
+        TurningProportion turningPrortions=parameters.getTurningProportion();
         String turningParams="turningProportions{LeftTurn="+ArrayToString(turningPrortions.getLeftTurn())+",AdvanceLeftTurn="+
                 ArrayToString(turningPrortions.getAdvanceLeftTurn())+",RightTurn="+ArrayToString(turningPrortions.getRightTurn())+
                 ",AdvanceRightTurn="+ArrayToString(turningPrortions.getAdvanceRightTurn())+",Advance="+

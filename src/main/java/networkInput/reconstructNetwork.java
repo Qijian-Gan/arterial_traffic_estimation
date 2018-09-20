@@ -6,454 +6,89 @@ package networkInput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.*;
-
+import commonClass.forAimsunNetwork.*;
+import commonClass.forAimsunNetwork.signalControl.*;
+import commonClass.forAimsunNetwork.detector.*;
+import commonClass.forAimsunNetwork.section.*;
+import commonClass.forAimsunNetwork.junction.*;
+import commonClass.forGeneralNetwork.*;
+import commonClass.forGeneralNetwork.approach.*;
+import commonClass.forGeneralNetwork.defaultSettings.*;
+import commonClass.forGeneralNetwork.detector.*;
+import commonClass.forGeneralNetwork.geometry.*;
+import commonClass.forGeneralNetwork.lane.*;
+import commonClass.forGeneralNetwork.section.*;
+import commonClass.forGeneralNetwork.turning.*;
 import main.MainFunction;
-import networkInput.readFromAimsun.*;
-import sun.awt.image.ImageWatched;
 
 public class reconstructNetwork {
 
-    public static class AimsunNetworkByApproach{
-        // This is the profile for Aimsun network by Approach
-        public AimsunNetworkByApproach(AimsunNetwork _aimsunNetwork,List<AimsunApproach> _aimsunNetworkByApproach){
-            this.aimsunNetwork=_aimsunNetwork;
-            this.aimsunNetworkByApproach=_aimsunNetworkByApproach;
-        }
-
-        protected AimsunNetwork aimsunNetwork; // Aimsun network
-        protected List<AimsunApproach> aimsunNetworkByApproach; // Reconstructed Aimsun network at the approach level
-
-        public AimsunNetwork getAimsunNetwork() {
-            return aimsunNetwork;
-        }
-
-        public List<AimsunApproach> getAimsunNetworkByApproach() {
-            return aimsunNetworkByApproach;
-        }
-    }
-
-    //*************************************Approach Property********************************
-    public static class AimsunApproach{
-        // This is the profile for Aimsun approach
-        // Each approach will have complete information of the network
-
-        public AimsunApproach(int _JunctionID, String _JunctionName, String _JunctionExtID, String _City, String _County,
-                              int _Signalized, int _FirstSectionID, String _FirstSectionName, String _FirstSectionExtID,
-                              SectionBelongToApproach _sectionBelongToApproach, TurningBelongToApproach _turningBelongToApproach,
-                              List<LaneTurningProperty> _laneTurningProperty, GeoDesign _geoDesign, DetectorProperty _detectorProperty,
-                              DefaultSignalSetting _defaultSignalSetting, MidlinkCountConfig _midlinkCountConfig,
-                              List<AimsunControlPlanJunction> _controlPlanJunction, AimsunJunction _aimsunJunction){
-            this.JunctionID=_JunctionID;
-            this.JunctionName=_JunctionName;
-            this.JunctionExtID=_JunctionExtID;
-            this.City=_City;
-            this.County=_County;
-            this.Signalized=_Signalized;
-            this.FirstSectionID=_FirstSectionID;
-            this.FirstSectionName=_FirstSectionName;
-            this.FirstSectionExtID=_FirstSectionExtID;
-            this.sectionBelongToApproach=_sectionBelongToApproach;
-            this.turningBelongToApproach=_turningBelongToApproach;
-            this.laneTurningProperty=_laneTurningProperty;
-            this.geoDesign=_geoDesign;
-            this.detectorProperty=_detectorProperty;
-            this.defaultSignalSetting=_defaultSignalSetting;
-            this.midlinkCountConfig=_midlinkCountConfig;
-            this.controlPlanJunction=_controlPlanJunction;
-            this.aimsunJunction=_aimsunJunction;
-        }
-        protected int JunctionID;
-        protected String JunctionName;
-        protected String JunctionExtID;
-        protected String City;
-        protected String County;
-        protected int Signalized;
-        protected int FirstSectionID;
-        protected String FirstSectionName;
-        protected String FirstSectionExtID;
-        protected SectionBelongToApproach sectionBelongToApproach; // Sections belonging to the approach
-        protected TurningBelongToApproach turningBelongToApproach; // Turnings belonging to the approach
-        protected List<LaneTurningProperty> laneTurningProperty;
-        protected GeoDesign geoDesign; // Geometry information
-        protected DetectorProperty detectorProperty;
-        protected DefaultSignalSetting defaultSignalSetting;
-        protected MidlinkCountConfig midlinkCountConfig; // It may be possible to get some information from midlink counts
-        protected List<AimsunControlPlanJunction> controlPlanJunction; // Control plans associated with the junction
-        // Aimsun junction information: include this metric just in case we need more information in the future
-        protected AimsunJunction aimsunJunction;
-
-        public int getJunctionID() {
-            return JunctionID;
-        }
-
-        public String getJunctionName() {
-            return JunctionName;
-        }
-
-        public int getFirstSectionID() {
-            return FirstSectionID;
-        }
-
-        public GeoDesign getGeoDesign() {
-            return geoDesign;
-        }
-
-        public DetectorProperty getDetectorProperty() {
-            return detectorProperty;
-        }
-
-        public TurningBelongToApproach getTurningBelongToApproach() {
-            return turningBelongToApproach;
-        }
-
-        public AimsunJunction getAimsunJunction() {
-            return aimsunJunction;
-        }
-
-        public int getSignalized() {
-            return Signalized;
-        }
-
-        public SectionBelongToApproach getSectionBelongToApproach() {
-            return sectionBelongToApproach;
-        }
-
-        public String getFirstSectionName() {
-            return FirstSectionName;
-        }
-
-        public List<LaneTurningProperty> getLaneTurningProperty() {
-            return laneTurningProperty;
-        }
-    }
-
-    //*************************************Detector Property********************************
-    public static class DetectorProperty{
-        // This is the profile for detector property at a given approach
-        // It is categorized into four different types based on the topology:
-        // -->exclusive left turn, exclusive right turn, advance, and general stopbar
-        //For each category, it may consist of several combinations of detection movements
-        // Exclusive left turn: left turn
-        // Exclusive right turn: right turn
-        // General stopbar: all movements, through, left-through, left-right, through-right
-        // Advance: all movements, left/right/through only, left-through, left-right, through-right
-        public DetectorProperty(List<DetectorMovementProperty> _ExclusiveLeftTurn,
-                                List<DetectorMovementProperty> _ExclusiveRightTurn,
-                                List<DetectorMovementProperty> _AdvanceDetectors,
-                                List<DetectorMovementProperty> _GeneralStopbarDetectors){
-            this.ExclusiveLeftTurn=_ExclusiveLeftTurn;
-            this.ExclusiveRightTurn=_ExclusiveRightTurn;
-            this.AdvanceDetectors=_AdvanceDetectors;
-            this.GeneralStopbarDetectors=_GeneralStopbarDetectors;
-        }
-        protected List<DetectorMovementProperty> ExclusiveLeftTurn; // Exclusive left turn (stop-bar) detectors
-        protected List<DetectorMovementProperty> ExclusiveRightTurn; // Exclusive right turn (stop-bar) detectors
-        protected List<DetectorMovementProperty> AdvanceDetectors; // Advance detectors (exclusive or combined movements)
-        // General stop-bar detectors (through, or combined movements)
-        protected List<DetectorMovementProperty> GeneralStopbarDetectors;
-
-        public List<DetectorMovementProperty> getAdvanceDetectors() {
-            return AdvanceDetectors;
-        }
-
-        public List<DetectorMovementProperty> getExclusiveLeftTurn() {
-            return ExclusiveLeftTurn;
-        }
-
-        public List<DetectorMovementProperty> getExclusiveRightTurn() {
-            return ExclusiveRightTurn;
-        }
-
-        public List<DetectorMovementProperty> getGeneralStopbarDetectors() {
-            return GeneralStopbarDetectors;
-        }
-    }
-
-    public static class DetectorMovementProperty{
-        // This is the profile for detector-movement property
-        public DetectorMovementProperty(String _Movement, List<Integer> _DetectorIDs, List<Double> _DetectorLengths,
-                                        List<Double> _DistancesToStopbar,List<Integer> _NumberOfLanes){
-            this.Movement=_Movement;
-            this.DetectorIDs=_DetectorIDs;
-            this.DetectorLengths=_DetectorLengths;
-            this.DistancesToStopbar=_DistancesToStopbar;
-            this.NumberOfLanes=_NumberOfLanes;
-        }
-        protected String Movement;
-        protected List<Integer> DetectorIDs; // Detector IDs belonging to the same movement
-        protected List<Double> DetectorLengths;
-        protected List<Double> DistancesToStopbar;
-        protected List<Integer> NumberOfLanes;
-
-        public String getMovement() {
-            return Movement;
-        }
-
-        public List<Integer> getNumberOfLanes() {
-            return NumberOfLanes;
-        }
-
-        public List<Double> getDistancesToStopbar() {
-            return DistancesToStopbar;
-        }
-
-        public List<Integer> getDetectorIDs() {
-            return DetectorIDs;
-        }
-
-        public List<Double> getDetectorLengths() {
-            return DetectorLengths;
-        }
-    }
-
-    //*************************************Section Property********************************
-    public static class SectionBelongToApproach{
-        // This is the profile for sections belonging to the same approach
-        public SectionBelongToApproach(List<Integer> _ListOfSections, List<AimsunSection> _Property){
-            this.ListOfSections=_ListOfSections;
-            this.Property=_Property;
-        }
-        protected List<Integer> ListOfSections; // The list of sections
-        protected List<AimsunSection> Property; // Section properties inherited from Aimsun
-
-        public List<Integer> getListOfSections() {
-            return ListOfSections;
-        }
-
-        public List<AimsunSection> getProperty() {
-            return Property;
-        }
-    }
-
-    //*************************************Turning Property********************************
-    public static class TurningBelongToApproach{
-        // This is the profile for turnings belonging to the same approach (the first/downstream section)
-        public TurningBelongToApproach(int [] _TurningAtFirstSectionFromLeftToRight, List<AimsunTurning> _TurningProperty){
-            this.TurningAtFirstSectionFromLeftToRight=_TurningAtFirstSectionFromLeftToRight;
-            this.TurningProperty=_TurningProperty;
-        }
-        protected int [] TurningAtFirstSectionFromLeftToRight; // List of turnings at the first section
-        protected List<AimsunTurning> TurningProperty; // Turning property inherited from Aimsun
-
-        public int[] getTurningAtFirstSectionFromLeftToRight() {
-            return TurningAtFirstSectionFromLeftToRight;
-        }
-
-        public List<AimsunTurning> getTurningProperty() {
-            return TurningProperty;
-        }
-    }
-
-    //*************************************Lane-Turning Property********************************
-    public static class LaneTurningProperty{
-        // This is the profile for lane-turning property for a give section
-        // Lane property(include turn info)-->section
-        public LaneTurningProperty(int _SectionID, int _NumLanes, List<LaneProperty> _Lanes){
-            this.SectionID=_SectionID;
-            this.NumLanes=_NumLanes;
-            this.Lanes=_Lanes;
-        }
-        protected int SectionID;
-        protected int NumLanes;
-        protected List<LaneProperty> Lanes; // Lane properties
-
-        public List<LaneProperty> getLanes() {
-            return Lanes;
-        }
-
-        public int getSectionID() {
-            return SectionID;
-        }
-    }
-
-    public static class LaneProperty{
-        // This is the profile for lane property
-        public LaneProperty(int _LaneID, int _IsExclusive, List<Integer> _TurningMovements, List<Double> _Proportions, double _Length){
-            this.LaneID=_LaneID;
-            this.IsExclusive=_IsExclusive;
-            this.TurningMovements=_TurningMovements;
-            this.Proportions=_Proportions;
-            this.Length=_Length;
-        }
-        protected int LaneID;
-        protected int IsExclusive; // Is an exclusive lane or not
-        protected List<Integer> TurningMovements; // Turning movements on the lane
-        protected List<Double> Proportions; // Proportions of the turning movements on the lane
-        protected double Length;
-
-        public int getLaneID() {
-            return LaneID;
-        }
-
-        public int getIsExclusive() {
-            return IsExclusive;
-        }
-
-        public List<Integer> getTurningMovements() {
-            return TurningMovements;
-        }
-    }
-
-    //*************************************Geometry Property********************************
-    public static class GeoDesign{
-        // This is the profile for geometry design
-        public GeoDesign(double _LinkLength, int _NumOfUpstreamLanes, int _NumOfDownstreamLanes,
-                         ExclusiveTurningProperty _ExclusiveLeftTurn, ExclusiveTurningProperty _ExclusiveRightTurn,
-                         int [] _TurnIndicator){
-            this.LinkLength=_LinkLength;
-            this.NumOfUpstreamLanes=_NumOfUpstreamLanes;
-            this.NumOfDownstreamLanes=_NumOfDownstreamLanes;
-            this.ExclusiveLeftTurn=_ExclusiveLeftTurn;
-            this.ExclusiveRightTurn=_ExclusiveRightTurn;
-            this.TurnIndicator=_TurnIndicator;
-        }
-        protected double LinkLength;
-        protected int NumOfUpstreamLanes; // Number of upstream lanes
-        protected int NumOfDownstreamLanes; // Number of downstream lanes
-        protected ExclusiveTurningProperty ExclusiveLeftTurn; // Left-turn pockets
-        protected ExclusiveTurningProperty ExclusiveRightTurn; // Right-turn pockets
-        protected int [] TurnIndicator;
-
-        public int[] getTurnIndicator() {
-            return TurnIndicator;
-        }
-
-        public ExclusiveTurningProperty getExclusiveLeftTurn() {
-            return ExclusiveLeftTurn;
-        }
-
-        public ExclusiveTurningProperty getExclusiveRightTurn() {
-            return ExclusiveRightTurn;
-        }
-
-        public int getNumOfUpstreamLanes() {
-            return NumOfUpstreamLanes;
-        }
-
-        public int getNumOfDownstreamLanes() {
-            return NumOfDownstreamLanes;
-        }
-
-        public double getLinkLength() {
-            return LinkLength;
-        }
-    }
-
-    public static class ExclusiveTurningProperty{
-        // This is the profile for exclusive turning property
-        public ExclusiveTurningProperty(int _NumLanes, double _Pocket ){
-            this.NumLanes=_NumLanes;
-            this.Pocket=_Pocket;
-        }
-        protected int NumLanes; // Number of exclusive lanes
-        protected double Pocket; // Length of the turning pocket
-
-        public double getPocket() {
-            return Pocket;
-        }
-
-        public int getNumLanes() {
-            return NumLanes;
-        }
-    }
-
-    //*************************************Default Signal Property********************************
-    public static class DefaultSignalSetting{
-        // This is the profile for default signal settings
-        public DefaultSignalSetting(int _CycleLength, int _LeftTurnGreen, int _ThroughGreen,
-                                    int _RightTurnGreen, String _LeftTurnSetting){
-            this.CycleLength=_CycleLength;
-            this.LeftTurnGreen=_LeftTurnGreen;
-            this.ThroughGreen=_ThroughGreen;
-            this.RightTurnGreen=_RightTurnGreen;
-            this.LeftTurnSetting=_LeftTurnSetting;
-        }
-        protected int CycleLength;
-        protected int LeftTurnGreen; // Green time for left-turn
-        protected int ThroughGreen; // Green time for through
-        protected int RightTurnGreen; // Green time for right-turn
-        protected String LeftTurnSetting; // Protected, Permitted, Protected-Permitted
-    }
-
-    //*************************************Midlink Count Configuration********************************
-    // This part is currently not used in our estimation model
-    // But information can be used to improve the calculation of turning proportions at the approach
-    public static class MidlinkCountConfig{
-        public MidlinkCountConfig(String _Location, String _Approach){
-            this.Location=_Location;
-            this.Approach=_Approach;
-        }
-        protected String Location; // Location of the files that stores the mid-link counts
-        protected String Approach; // Which approach the mid-link counts belong to
-    }
-
-    //*************************************Control Plan Configuration********************************
-    //ControlPlanBelongJunction: Directly inherited from the Aimsun inputs
-
-    //*************************************Major Functions********************************
+   //*************************************Major Functions********************************
     public static AimsunNetworkByApproach reconstructAimsunNetwork(){
         // This function is used to reconstruct Aimsun Network
 
         AimsunNetwork aimsunNetwork=readFromAimsun.readAimsunNetworkFiles();
 
-        aimsunNetwork.aimsunJunctionList=ReAdjustJunctionGeneratedByCentroidsInAimsun(aimsunNetwork.aimsunJunctionList);
+        // Readjust junctions generated by centroids in aimsun
+        aimsunNetwork.setAimsunJunctionList(ReAdjustJunctionGeneratedByCentroidsInAimsun(aimsunNetwork.getAimsunJunctionList()));
 
         // Get Linear and NonLinear Junctions
         // Linear: 1*1
         // Nonlinear: M*N (>1)
-        List<AimsunJunction> linearJunction=getLinearOrNonLinearJunction(aimsunNetwork.aimsunJunctionList,"Linear");
-        List<AimsunJunction> nonLinearJunction=getLinearOrNonLinearJunction(aimsunNetwork.aimsunJunctionList,"NonLinear");
+        List<AimsunJunction> linearJunction=getLinearOrNonLinearJunction(aimsunNetwork.getAimsunJunctionList(),"Linear");
+        List<AimsunJunction> nonLinearJunction=getLinearOrNonLinearJunction(aimsunNetwork.getAimsunJunctionList(),"NonLinear");
 
         List<AimsunApproach> aimsunApproachList=new ArrayList<AimsunApproach>();
 
         // Loop for each nonlinear junction
         for (int i=0;i<nonLinearJunction.size();i++){
-            int JunctionID=nonLinearJunction.get(i).JunctionID;
+            int JunctionID=nonLinearJunction.get(i).getJunctionID();
 
             // Check the control plans for that junction
             List<AimsunControlPlanJunction> ControlPlanBelongToJunction=
-                    getControlPlanBelongToJunction(JunctionID,aimsunNetwork.aimsunControlPlanJunctionList,aimsunNetwork.aimsunMasterControlPlanList);
+                    getControlPlanBelongToJunction(JunctionID,aimsunNetwork.getAimsunControlPlanJunctionList(),
+                            aimsunNetwork.getAimsunMasterControlPlanList());
 
             // Check each entrance sections
-            for (int j=0;j<nonLinearJunction.get(i).NumEntranceSections;j++){
+            for (int j=0;j<nonLinearJunction.get(i).getNumEntranceSections();j++){
                 // Store the junction information
                 AimsunJunction aimsunJunction=nonLinearJunction.get(i);
 
                 // Get the junction ID and Name
-                JunctionID=nonLinearJunction.get(i).JunctionID;
-                String JunctionName=nonLinearJunction.get(i).JunctionName;
+                JunctionID=nonLinearJunction.get(i).getJunctionID();
+                String JunctionName=nonLinearJunction.get(i).getJunctionName();
 
                 // Get the junction External ID, City, County
                 String JunctionExtID,City,County;
-                if(nonLinearJunction.get(i).JunctionExtID.equals("")){
+                if(nonLinearJunction.get(i).getJunctionExtID().equals("")){
                     JunctionExtID="N/A";
                     City="N/A";
                     County="N/A";
                 }else{
-                    List<String> stringList=findIDCityCounty(nonLinearJunction.get(i).JunctionExtID);
+                    List<String> stringList=findIDCityCounty(nonLinearJunction.get(i).getJunctionExtID());
                     JunctionExtID=stringList.get(0);
                     City=stringList.get(1);
                     County=stringList.get(2);
                 }
 
                 // Get whether it is signalized or not
-                int Signalized=nonLinearJunction.get(i).Signalized;
+                int Signalized=nonLinearJunction.get(i).getSignalized();
                 // Get the section Information
-                int FirstSectionID=nonLinearJunction.get(i).EntranceSections[j];
+                int FirstSectionID=nonLinearJunction.get(i).getEntranceSections()[j];
                 System.out.println("Junction ID="+JunctionID+", Junction Name="+JunctionName+", First Section ID="+FirstSectionID);
 
-                AimsunSection aimsunSection=findSectionInformation(FirstSectionID,aimsunNetwork.aimsunSectionList);
+                AimsunSection aimsunSection=findSectionInformation(FirstSectionID,aimsunNetwork.getAimsunSectionList());
                 if(aimsunSection.equals(null)){
                     System.out.println("Can not find the section information!");
                     System.exit(-1);
                 }
-                String FirstSectionName=aimsunSection.SectionName;
-                String FirstSectionExtID=aimsunSection.SectionExtID;
+                String FirstSectionName=aimsunSection.getSectionName();
+                String FirstSectionExtID=aimsunSection.getSectionExtID();
 
                 // Find the links belonging to the same approach
                 List<Integer> ListOfSections=findUpstreamSections(linearJunction, FirstSectionID);
-                List<AimsunSection> aimsunSectionByApproachList=getSectionProperties(aimsunNetwork.aimsunJunctionList,
-                        aimsunNetwork.aimsunSectionList, ListOfSections);
+                List<AimsunSection> aimsunSectionByApproachList=getSectionProperties(aimsunNetwork.getAimsunJunctionList(),
+                        aimsunNetwork.getAimsunSectionList(), ListOfSections);
                 SectionBelongToApproach sectionBelongToApproach=new SectionBelongToApproach(ListOfSections,aimsunSectionByApproachList);
 
                 // Get turning properties at the downstream section
@@ -466,7 +101,7 @@ public class reconstructNetwork {
                 GeoDesign geoDesign=getGeometryDesign(sectionBelongToApproach, turningBelongToApproach, laneTurningProperty);
 
                 // Get the detector information
-                DetectorProperty detectorProperty=getDetectorProperty(sectionBelongToApproach,aimsunNetwork.aimsunDetectorList);
+                DetectorProperty detectorProperty=getDetectorProperty(sectionBelongToApproach,aimsunNetwork.getAimsunDetectorList());
 
                 // Get default signal settings
                 DefaultSignalSetting defaultSignalSetting=new DefaultSignalSetting(MainFunction.cBlock.CycleLength,
@@ -508,25 +143,25 @@ public class reconstructNetwork {
         for(int i=0;i<aimsunJunctionList.size();i++){
             AimsunJunction aimsunJunction=aimsunJunctionList.get(i);
             // Check junction
-            if(aimsunJunction.JunctionID>maxID){
-                maxID=aimsunJunction.JunctionID;
+            if(aimsunJunction.getJunctionID()>maxID){
+                maxID=aimsunJunction.getJunctionID();
             }
             // Check upstream sections
-            for(int j=0;j<aimsunJunction.NumEntranceSections;j++){
-                if(aimsunJunction.EntranceSections[j]>maxID){
-                    maxID=aimsunJunction.EntranceSections[j];
+            for(int j=0;j<aimsunJunction.getNumEntranceSections();j++){
+                if(aimsunJunction.getEntranceSections()[j]>maxID){
+                    maxID=aimsunJunction.getEntranceSections()[j];
                 }
             }
             // Check downstream sections
-            for(int j=0;j<aimsunJunction.NumExitSections;j++){
-                if(aimsunJunction.ExitSections[j]>maxID){
-                    maxID=aimsunJunction.ExitSections[j];
+            for(int j=0;j<aimsunJunction.getNumExitSections();j++){
+                if(aimsunJunction.getExitSections()[j]>maxID){
+                    maxID=aimsunJunction.getExitSections()[j];
                 }
             }
             // Check turnings
-            for(int j=0;j<aimsunJunction.NumTurns;j++){
-                if(aimsunJunction.Turnings.get(j).getTurnID()>maxID){
-                    maxID=aimsunJunction.Turnings.get(j).getTurnID();
+            for(int j=0;j<aimsunJunction.getNumTurns();j++){
+                if(aimsunJunction.getTurnings().get(j).getTurnID()>maxID){
+                    maxID=aimsunJunction.getTurnings().get(j).getTurnID();
                 }
             }
         }
@@ -538,32 +173,32 @@ public class reconstructNetwork {
             AimsunJunction aimsunJunction=aimsunJunctionList.get(i);
             // Copy AimsunSectionTurning
             List<AimsunSectionTurning> aimsunSectionTurnings=new ArrayList<AimsunSectionTurning>();
-            aimsunSectionTurnings.addAll(aimsunJunction.SectionTurningList);
+            aimsunSectionTurnings.addAll(aimsunJunction.getSectionTurningList());
             // Copy AimsunTurning
             List<AimsunTurning> aimsunTurningList=new ArrayList<AimsunTurning>();
-            aimsunTurningList.addAll(aimsunJunction.Turnings);
-            if(aimsunJunction.NumTurns==2 && aimsunJunction.NumExitSections==2 && aimsunJunction.NumEntranceSections==2){
-                AimsunJunction aimsunJunctionNew=new AimsunJunction(aimsunJunction.JunctionID, aimsunJunction.JunctionName,
-                        aimsunJunction.JunctionExtID, aimsunJunction.Signalized, aimsunJunction.NumEntranceSections,
-                        aimsunJunction.NumExitSections, aimsunJunction.NumTurns, aimsunJunction.EntranceSections,
-                        aimsunJunction.ExitSections, aimsunTurningList, aimsunSectionTurnings);
-                int UpstreamSection1=aimsunJunction.EntranceSections[0];
+            aimsunTurningList.addAll(aimsunJunction.getTurnings());
+            if(aimsunJunction.getNumTurns()==2 && aimsunJunction.getNumExitSections()==2 && aimsunJunction.getNumEntranceSections()==2){
+                AimsunJunction aimsunJunctionNew=new AimsunJunction(aimsunJunction.getJunctionID(), aimsunJunction.getJunctionName(),
+                        aimsunJunction.getJunctionExtID(), aimsunJunction.getSignalized(), aimsunJunction.getNumEntranceSections(),
+                        aimsunJunction.getNumExitSections(), aimsunJunction.getNumTurns(), aimsunJunction.getEntranceSections(),
+                        aimsunJunction.getExitSections(), aimsunTurningList, aimsunSectionTurnings);
+                int UpstreamSection1=aimsunJunction.getEntranceSections()[0];
                 int SectionIdx1=0;
-                int UpstreamSection2=aimsunJunction.EntranceSections[1];
+                int UpstreamSection2=aimsunJunction.getEntranceSections()[1];
                 int SectionIdx2=0;
                 int TurnIdx1=0;
                 int TurnIdx2=0;
-                for(int j=0;j<aimsunJunction.SectionTurningList.size();j++){
-                    if(aimsunJunction.SectionTurningList.get(j).SectionID==UpstreamSection1){
-                        if(aimsunJunction.SectionTurningList.get(j).NumTurns==1){
+                for(int j=0;j<aimsunJunction.getSectionTurningList().size();j++){
+                    if(aimsunJunction.getSectionTurningList().get(j).getSectionID()==UpstreamSection1){
+                        if(aimsunJunction.getSectionTurningList().get(j).getNumTurns()==1){
                             SectionIdx1=j;
                         }else{
                             System.out.println("Wrong setting of turnings; Wrong network connectivity!");
                             System.exit(-1);
                         }
                     }
-                    if(aimsunJunction.SectionTurningList.get(j).SectionID==UpstreamSection2){
-                        if(aimsunJunction.SectionTurningList.get(j).NumTurns==1){
+                    if(aimsunJunction.getSectionTurningList().get(j).getSectionID()==UpstreamSection2){
+                        if(aimsunJunction.getSectionTurningList().get(j).getNumTurns()==1){
                             SectionIdx2=j;
                         }else{
                             System.out.println("Wrong setting of turnings; Wrong network connectivity!");
@@ -573,45 +208,44 @@ public class reconstructNetwork {
                 }
                 int DownstreamSection1=0;
                 int DownstreamSection2=0;
-                for(int j=0;j<aimsunJunction.Turnings.size();j++){
-                    if(aimsunJunction.Turnings.get(j).OrigSectionID==UpstreamSection1){
-                        DownstreamSection1=aimsunJunction.Turnings.get(j).DestSectionID;
+                for(int j=0;j<aimsunJunction.getTurnings().size();j++){
+                    if(aimsunJunction.getTurnings().get(j).getOrigSectionID()==UpstreamSection1){
+                        DownstreamSection1=aimsunJunction.getTurnings().get(j).getDestSectionID();
                         TurnIdx1=j;
                     }
-                    if(aimsunJunction.Turnings.get(j).OrigSectionID==UpstreamSection2){
-                        DownstreamSection2=aimsunJunction.Turnings.get(j).DestSectionID;
+                    if(aimsunJunction.getTurnings().get(j).getOrigSectionID()==UpstreamSection2){
+                        DownstreamSection2=aimsunJunction.getTurnings().get(j).getDestSectionID();
                         TurnIdx2=j;
                     }
                 }
 
                 //Remove upstream section2 and turn2 from aimsunJunctionList.get(i)
-                aimsunJunctionList.get(i).NumEntranceSections=1;
-                aimsunJunctionList.get(i).EntranceSections=new int[]{UpstreamSection1};
-                aimsunJunctionList.get(i).NumExitSections=1;
-                aimsunJunctionList.get(i).ExitSections=new int[]{DownstreamSection1};
-                aimsunJunctionList.get(i).NumTurns=1;
-                aimsunJunctionList.get(i).Turnings.remove(TurnIdx2);
-                aimsunJunctionList.get(i).SectionTurningList.remove(SectionIdx2);
+                aimsunJunctionList.get(i).setNumEntranceSections(1);
+                aimsunJunctionList.get(i).setEntranceSections(new int[]{UpstreamSection1});
+                aimsunJunctionList.get(i).setNumExitSections(1);
+                aimsunJunctionList.get(i).setExitSections(new int[]{DownstreamSection1});
+                aimsunJunctionList.get(i).setNumTurns(1);
+                aimsunJunctionList.get(i).getTurnings().remove(TurnIdx2);
+                aimsunJunctionList.get(i).getSectionTurningList().remove(SectionIdx2);
 
                 //Remove upstream section1 and turn1 from aimsunApproachNew
                 maxID=maxID+1;
-                aimsunJunctionNew.JunctionID=maxID;
-                aimsunJunctionNew.NumEntranceSections=1;
-                aimsunJunctionNew.EntranceSections=new int[]{UpstreamSection2};
-                aimsunJunctionNew.NumExitSections=1;
-                aimsunJunctionNew.ExitSections=new int[]{DownstreamSection2};
-                aimsunJunctionNew.NumTurns=1;
-                aimsunJunctionNew.Turnings.remove(TurnIdx1);
-                aimsunJunctionNew.SectionTurningList.remove(SectionIdx1);
+                aimsunJunctionNew.setJunctionID(maxID);
+                aimsunJunctionNew.setNumEntranceSections(1);
+                aimsunJunctionNew.setEntranceSections(new int[]{UpstreamSection2});
+                aimsunJunctionNew.setNumExitSections(1);
+                aimsunJunctionNew.setExitSections(new int[]{DownstreamSection2});
+                aimsunJunctionNew.setNumTurns(1);
+                aimsunJunctionNew.getTurnings().remove(TurnIdx1);
+                aimsunJunctionNew.getSectionTurningList().remove(SectionIdx1);
                 // Add it to the temporary list
                 aimsunJunctionListNew.add(aimsunJunctionNew);
             }
         }
-
         aimsunJunctionList.addAll(aimsunJunctionListNew);
-
         return aimsunJunctionList;
     }
+
     /**
      *
      * @param sectionBelongToApproach SectionBelongToApproach class
@@ -622,14 +256,14 @@ public class reconstructNetwork {
                                                        List<AimsunDetector> aimsunDetectorList){
         // This is the function to get the detector properties
 
-        List<Integer> ListOfSections=sectionBelongToApproach.ListOfSections;
-        List<AimsunSection> Property=sectionBelongToApproach.Property;
+        List<Integer> ListOfSections=sectionBelongToApproach.getListOfSections();
+        List<AimsunSection> Property=sectionBelongToApproach.getProperty();
 
         // Get the detectors belonging to the sections
         List<AimsunDetector> selectedDetectorList=new ArrayList<AimsunDetector>();
         for(int j=0;j<aimsunDetectorList.size();j++){
             for(int i=0;i<ListOfSections.size();i++){
-                if(ListOfSections.get(i)==aimsunDetectorList.get(j).SectionID){
+                if(ListOfSections.get(i)==aimsunDetectorList.get(j).getSectionID()){
                     selectedDetectorList.add(aimsunDetectorList.get(j));
                     break;
                 }
@@ -708,11 +342,11 @@ public class reconstructNetwork {
         List<Integer> NumberOfLanes =new ArrayList<Integer>();
 
         for(int i=0;i<aimsunDetector.size();i++){ // Loop for the selected detectors
-            if(aimsunDetector.get(i).Movement.equals(MovementInput)){ // If it matches the movement input
+            if(aimsunDetector.get(i).getMovement().equals(MovementInput)){ // If it matches the movement input
                 // Add the detector ID,length, and number of lanes
-                DetectorIDs.add(Integer.parseInt(aimsunDetector.get(i).ExternalID.trim()));
-                DetectorLengths.add(aimsunDetector.get(i).Length);
-                NumberOfLanes.add(aimsunDetector.get(i).NumOfLanes);
+                DetectorIDs.add(Integer.parseInt(aimsunDetector.get(i).getExternalID().trim()));
+                DetectorLengths.add(aimsunDetector.get(i).getLength());
+                NumberOfLanes.add(aimsunDetector.get(i).getNumOfLanes());
 
                 if(Type.equals("Stopbar")){ // For stopbar detectors, distanceToStopbar=0
                     DistancesToStopbar.add(0.0);
@@ -724,15 +358,15 @@ public class reconstructNetwork {
 
                         // Get the link/section lane length
                         double maxLaneLength=0;
-                        for(int k=0;k<aimsunSection.get(j).LaneLengths.length;k++){
-                            if(aimsunSection.get(j).LaneLengths[k]>maxLaneLength){
-                                maxLaneLength=aimsunSection.get(j).LaneLengths[k];
+                        for(int k=0;k<aimsunSection.get(j).getLaneLengths().length;k++){
+                            if(aimsunSection.get(j).getLaneLengths()[k]>maxLaneLength){
+                                maxLaneLength=aimsunSection.get(j).getLaneLengths()[k];
                             }
                         }
                         // If find the corresponding section
-                        if(aimsunDetector.get(i).SectionID==aimsunSection.get(j).SectionID){
+                        if(aimsunDetector.get(i).getSectionID()==aimsunSection.get(j).getSectionID()){
                             distance=distance+Math.max(0.0,maxLaneLength-
-                                    (aimsunDetector.get(i).InitialPosition+aimsunDetector.get(i).FinalPosition)/2);
+                                    (aimsunDetector.get(i).getInitialPosition()+aimsunDetector.get(i).getFinalPosition())/2);
                             break;
                         }
                         else{// If not found
@@ -794,59 +428,59 @@ public class reconstructNetwork {
 
         // Get the total link length
         double LinkLength = 0;
-        for (int i = 0; i < sectionBelongToApproach.ListOfSections.size(); i++) {
+        for (int i = 0; i < sectionBelongToApproach.getListOfSections().size(); i++) {
             double maxLength = 0;
             //Get the max length of a given link
-            for (int j = 0; j < sectionBelongToApproach.Property.get(i).LaneLengths.length; j++) {
-                if (sectionBelongToApproach.Property.get(i).LaneLengths[j] > maxLength) {
-                    maxLength = sectionBelongToApproach.Property.get(i).LaneLengths[j];
+            for (int j = 0; j < sectionBelongToApproach.getProperty().get(i).getLaneLengths().length; j++) {
+                if (sectionBelongToApproach.getProperty().get(i).getLaneLengths()[j] > maxLength) {
+                    maxLength = sectionBelongToApproach.getProperty().get(i).getLaneLengths()[j];
                 }
             }
             LinkLength = LinkLength + maxLength;
         }
-        geoDesign.LinkLength = LinkLength;
+        geoDesign.setLinkLength(LinkLength);
 
         // Get the number of upstream lanes (at the last section)
         // Only Check full lanes (it is possible upstream lane is not full lane)
         int NumOfUpstreamLanes = 0;
-        for (int i = 0; i < sectionBelongToApproach.Property.get(sectionBelongToApproach.Property.size() - 1).IsFullLane.length; i++) {
-            if (sectionBelongToApproach.Property.get(sectionBelongToApproach.Property.size() - 1).IsFullLane[i] == 1) {
+        for (int i = 0; i < sectionBelongToApproach.getProperty().get(sectionBelongToApproach.getProperty().size() - 1).getIsFullLane().length; i++) {
+            if (sectionBelongToApproach.getProperty().get(sectionBelongToApproach.getProperty().size() - 1).getIsFullLane()[i] == 1) {
                 NumOfUpstreamLanes = NumOfUpstreamLanes + 1;
             }
         }
-        geoDesign.NumOfUpstreamLanes = NumOfUpstreamLanes;
+        geoDesign.setNumOfUpstreamLanes(NumOfUpstreamLanes);
 
         // Get the turning pockets
         ExclusiveTurningProperty exclusiveTurningPropertyLeft=new ExclusiveTurningProperty(0,0 );
         ExclusiveTurningProperty exclusiveTurningPropertyRight=new ExclusiveTurningProperty(0,0 );
         int NumOfDownstreamLanes=0;
-        for(int i=0;i<laneTurningProperty.get(0).NumLanes;i++){// Loop for each lane
-            if(laneTurningProperty.get(0).Lanes.get(i).IsExclusive==1 &&
-                    laneTurningProperty.get(0).Lanes.get(i).TurningMovements.size()>0){ // If it is exclusive and has associated turns
-                for(int j=0;j<turningBelongToApproach.TurningProperty.size();j++){
+        for(int i=0;i<laneTurningProperty.get(0).getNumLanes();i++){// Loop for each lane
+            if(laneTurningProperty.get(0).getLanes().get(i).getIsExclusive()==1 &&
+                    laneTurningProperty.get(0).getLanes().get(i).getTurningMovements().size()>0){ // If it is exclusive and has associated turns
+                for(int j=0;j<turningBelongToApproach.getTurningProperty().size();j++){
                     // Search the corresponding turning movement
-                    if(laneTurningProperty.get(0).Lanes.get(i).TurningMovements.get(0)==
-                            turningBelongToApproach.TurningProperty.get(j).TurnID){
+                    if(laneTurningProperty.get(0).getLanes().get(i).getTurningMovements().get(0)==
+                            turningBelongToApproach.getTurningProperty().get(j).getTurnID()){
                         // If it is an exclusive left-turn lane
-                        if(turningBelongToApproach.TurningProperty.get(j).Movement.equals("Left Turn")){
-                            if(exclusiveTurningPropertyLeft.NumLanes==0){
-                                exclusiveTurningPropertyLeft.NumLanes=1;
-                                exclusiveTurningPropertyLeft.Pocket=laneTurningProperty.get(0).Lanes.get(i).Length;
+                        if(turningBelongToApproach.getTurningProperty().get(j).getMovement().equals("Left Turn")){
+                            if(exclusiveTurningPropertyLeft.getNumLanes()==0){
+                                exclusiveTurningPropertyLeft.setNumLanes(1);
+                                exclusiveTurningPropertyLeft.setPocket(laneTurningProperty.get(0).getLanes().get(i).getLength());
                             }else{
-                                exclusiveTurningPropertyLeft.NumLanes=exclusiveTurningPropertyLeft.NumLanes+1;
-                                exclusiveTurningPropertyLeft.Pocket=Math.min(exclusiveTurningPropertyLeft.Pocket,
-                                        laneTurningProperty.get(0).Lanes.get(i).Length);
+                                exclusiveTurningPropertyLeft.setNumLanes(exclusiveTurningPropertyLeft.getNumLanes()+1);
+                                exclusiveTurningPropertyLeft.setPocket(Math.min(exclusiveTurningPropertyLeft.getPocket(),
+                                        laneTurningProperty.get(0).getLanes().get(i).getLength()));
                             }
                         }
                         //If it is an exclusive right-turn lane
-                        else if(turningBelongToApproach.TurningProperty.get(j).Movement.equals("Right Turn")) {
-                            if(exclusiveTurningPropertyRight.NumLanes==0){
-                                exclusiveTurningPropertyRight.NumLanes=1;
-                                exclusiveTurningPropertyRight.Pocket=laneTurningProperty.get(0).Lanes.get(i).Length;
+                        else if(turningBelongToApproach.getTurningProperty().get(j).getMovement().equals("Right Turn")) {
+                            if(exclusiveTurningPropertyRight.getNumLanes()==0){
+                                exclusiveTurningPropertyRight.setNumLanes(1);
+                                exclusiveTurningPropertyRight.setPocket(laneTurningProperty.get(0).getLanes().get(i).getLength());
                             }else{
-                                exclusiveTurningPropertyRight.NumLanes=exclusiveTurningPropertyRight.NumLanes+1;
-                                exclusiveTurningPropertyRight.Pocket=Math.min(exclusiveTurningPropertyRight.Pocket,
-                                        laneTurningProperty.get(0).Lanes.get(i).Length);
+                                exclusiveTurningPropertyRight.setNumLanes(exclusiveTurningPropertyRight.getNumLanes()+1);
+                                exclusiveTurningPropertyRight.setPocket(Math.min(exclusiveTurningPropertyRight.getPocket(),
+                                        laneTurningProperty.get(0).getLanes().get(i).getLength()));
                             }
                         }
                         // For all other cases: through lane or no descriptions
@@ -863,24 +497,24 @@ public class reconstructNetwork {
                 NumOfDownstreamLanes=NumOfDownstreamLanes+1;
             }
         }
-        geoDesign.ExclusiveLeftTurn=exclusiveTurningPropertyLeft;
-        geoDesign.ExclusiveRightTurn=exclusiveTurningPropertyRight;
-        geoDesign.NumOfDownstreamLanes=NumOfDownstreamLanes;
+        geoDesign.setExclusiveLeftTurn(exclusiveTurningPropertyLeft);
+        geoDesign.setExclusiveRightTurn(exclusiveTurningPropertyRight);
+        geoDesign.setNumOfDownstreamLanes(NumOfDownstreamLanes);
 
         // Update turn indicator
         int [] TurnIndicator=new int[]{0,0,0};
-        for (int i=0;i<turningBelongToApproach.TurningProperty.size();i++){
-            if(turningBelongToApproach.TurningProperty.get(i).Movement.equals("Left Turn")){
+        for (int i=0;i<turningBelongToApproach.getTurningProperty().size();i++){
+            if(turningBelongToApproach.getTurningProperty().get(i).getMovement().equals("Left Turn")){
                 TurnIndicator[0]=1;
             }
-            if(turningBelongToApproach.TurningProperty.get(i).Movement.equals("Through")){
+            if(turningBelongToApproach.getTurningProperty().get(i).getMovement().equals("Through")){
                 TurnIndicator[1]=1;
             }
-            if(turningBelongToApproach.TurningProperty.get(i).Movement.equals("Right Turn")){
+            if(turningBelongToApproach.getTurningProperty().get(i).getMovement().equals("Right Turn")){
                 TurnIndicator[2]=1;
             }
         }
-        geoDesign.TurnIndicator=TurnIndicator;
+        geoDesign.setTurnIndicator(TurnIndicator);
 
         return geoDesign;
     }
@@ -897,10 +531,10 @@ public class reconstructNetwork {
 
         List<LaneTurningProperty> laneTurningPropertyList=new ArrayList<LaneTurningProperty>();
 
-        for(int i=0;i<sectionBelongToApproach.ListOfSections.size();i++){
+        for(int i=0;i<sectionBelongToApproach.getListOfSections().size();i++){
             // Loop for the list of sections
-            int SectionID=sectionBelongToApproach.ListOfSections.get(i);
-            int NumLanes=sectionBelongToApproach.Property.get(i).NumLanes;
+            int SectionID=sectionBelongToApproach.getListOfSections().get(i);
+            int NumLanes=sectionBelongToApproach.getProperty().get(i).getNumLanes();
 
             // Note: Lane ID=1:N from leftmost to rightmost
             //       Turn organized from leftmost to rightmost
@@ -909,14 +543,14 @@ public class reconstructNetwork {
             List<LaneProperty> lanePropertyList=new ArrayList<LaneProperty>();
             for(int j=0;j<NumLanes;j++){
                 int LaneID=j+1; // Get the lane ID; index starting from 0 in Java
-                double Length=sectionBelongToApproach.Property.get(i).LaneLengths[j]; // Get the lane length
+                double Length=sectionBelongToApproach.getProperty().get(i).getLaneLengths()[j]; // Get the lane length
 
                 // Get the turns using the current lane
                 List<Integer> TurningMovements =new ArrayList<Integer>();
-                for(int k=0;k<turningBelongToApproach.TurningProperty.size();k++){
-                    if(turningBelongToApproach.TurningProperty.get(k).OrigFromLane<=LaneID &&
-                            turningBelongToApproach.TurningProperty.get(k).OrigToLane>=LaneID)
-                        TurningMovements.add(turningBelongToApproach.TurningProperty.get(k).TurnID);
+                for(int k=0;k<turningBelongToApproach.getTurningProperty().size();k++){
+                    if(turningBelongToApproach.getTurningProperty().get(k).getOrigFromLane()<=LaneID &&
+                            turningBelongToApproach.getTurningProperty().get(k).getOrigToLane()>=LaneID)
+                        TurningMovements.add(turningBelongToApproach.getTurningProperty().get(k).getTurnID());
                 }
 
                 // Get whether it is exclusive or not
@@ -930,10 +564,10 @@ public class reconstructNetwork {
                 int totLane=0;
                 for(int k=0;k<TurningMovements.size();k++){
                     // Get the number of lanes associated to a given turn
-                    for(int p=0;p<turningBelongToApproach.TurningProperty.size();p++){
-                        if(turningBelongToApproach.TurningProperty.get(p).TurnID==TurningMovements.get(k)){
-                            numLaneByTurn[k]=turningBelongToApproach.TurningProperty.get(p).OrigToLane-
-                                    turningBelongToApproach.TurningProperty.get(p).OrigFromLane+1;
+                    for(int p=0;p<turningBelongToApproach.getTurningProperty().size();p++){
+                        if(turningBelongToApproach.getTurningProperty().get(p).getTurnID()==TurningMovements.get(k)){
+                            numLaneByTurn[k]=turningBelongToApproach.getTurningProperty().get(p).getOrigToLane()-
+                                    turningBelongToApproach.getTurningProperty().get(p).getOrigFromLane()+1;
                             totLane=totLane+numLaneByTurn[k];
                             break;
                         }
@@ -968,14 +602,14 @@ public class reconstructNetwork {
         // This function is used to find turnings belonging to the first section
 
         int [] ListOfTurns=null;
-        List<AimsunTurning> aimsunTurningList=new ArrayList<readFromAimsun.AimsunTurning>();
-        for(int i=0;i<aimsunJunction.SectionTurningList.size();i++){ // Loop for all section-turning components
-            if(aimsunJunction.SectionTurningList.get(i).SectionID==FirstSectionID){ // Check the section ID, if found
-                ListOfTurns=aimsunJunction.SectionTurningList.get(i).TurnIDFromLeftToRight; // Get the list of turns
+        List<AimsunTurning> aimsunTurningList=new ArrayList<AimsunTurning>();
+        for(int i=0;i<aimsunJunction.getSectionTurningList().size();i++){ // Loop for all section-turning components
+            if(aimsunJunction.getSectionTurningList().get(i).getSectionID()==FirstSectionID){ // Check the section ID, if found
+                ListOfTurns=aimsunJunction.getSectionTurningList().get(i).getTurnIDFromLeftToRight(); // Get the list of turns
                 for(int j=0; j<ListOfTurns.length;j++){ // Loop for each turn
-                    for(int k=0;k<aimsunJunction.Turnings.size();k++){ // Loop for all turns belonging to the intersection
-                        if(ListOfTurns[j]==aimsunJunction.Turnings.get(k).TurnID){ // If the same turn ID found
-                            aimsunTurningList.add(aimsunJunction.Turnings.get(k)); // Append the turning property
+                    for(int k=0;k<aimsunJunction.getTurnings().size();k++){ // Loop for all turns belonging to the intersection
+                        if(ListOfTurns[j]==aimsunJunction.getTurnings().get(k).getTurnID()){ // If the same turn ID found
+                            aimsunTurningList.add(aimsunJunction.getTurnings().get(k)); // Append the turning property
                             break;
                         }
                     }
@@ -1007,7 +641,7 @@ public class reconstructNetwork {
             AimsunSection tmpAimsunSection=null;
             // Loop for the corresponding section
             for (int j=0;j<aimsunSectionList.size();j++){
-                if(aimsunSectionList.get(j).SectionID==ListOfSections.get(i)){
+                if(aimsunSectionList.get(j).getSectionID()==ListOfSections.get(i)){
                     tmpAimsunSection=aimsunSectionList.get(j);
                     break;
                 }
@@ -1021,17 +655,17 @@ public class reconstructNetwork {
             boolean findDownstreamJunction=false;
             for (int j=0;j<aimsunJunctionList.size();j++) {
                 if (findDownstreamJunction == false){
-                    for (int k = 0; k < aimsunJunctionList.get(j).NumEntranceSections; k++) {
-                        if (aimsunJunctionList.get(j).EntranceSections[k] == ListOfSections.get(i)) {
-                            tmpAimsunSection.DownstreamJunction = aimsunJunctionList.get(j);
+                    for (int k = 0; k < aimsunJunctionList.get(j).getNumEntranceSections(); k++) {
+                        if (aimsunJunctionList.get(j).getEntranceSections()[k] == ListOfSections.get(i)) {
+                            tmpAimsunSection.setDownstreamJunction(aimsunJunctionList.get(j));
                             findDownstreamJunction=true;
                         }
                     }
                 }
                 if (findUpstreamJunction == false){
-                    for (int k = 0; k < aimsunJunctionList.get(j).NumExitSections; k++) {
-                        if (aimsunJunctionList.get(j).ExitSections[k] == ListOfSections.get(i)) {
-                            tmpAimsunSection.UpstreamJunction = aimsunJunctionList.get(j);
+                    for (int k = 0; k < aimsunJunctionList.get(j).getNumExitSections(); k++) {
+                        if (aimsunJunctionList.get(j).getExitSections()[k] == ListOfSections.get(i)) {
+                            tmpAimsunSection.setUpstreamJunction(aimsunJunctionList.get(j));
                             findUpstreamJunction=true;
                         }
                     }
@@ -1060,9 +694,9 @@ public class reconstructNetwork {
             int curAdd=0;
             for(int i=0;i<linearJunction.size();i++){ // Loop for all junctions
                 curAdd=i;
-                if(linearJunction.get(i).ExitSections[0]==ExitSection){ //Find the right one?
-                    ListOfSections.add(linearJunction.get(i).ExitSections[0]);
-                    ExitSection=linearJunction.get(i).EntranceSections[0];
+                if(linearJunction.get(i).getExitSections()[0]==ExitSection){ //Find the right one?
+                    ListOfSections.add(linearJunction.get(i).getExitSections()[0]);
+                    ExitSection=linearJunction.get(i).getEntranceSections()[0];
                     break;
                 }
             }
@@ -1085,7 +719,7 @@ public class reconstructNetwork {
         // This function is used to find the information for a given section
         AimsunSection aimsunSection=null;
         for(int i=0;i<aimsunSectionList.size();i++){
-            if(aimsunSectionList.get(i).SectionID==SectionID){
+            if(aimsunSectionList.get(i).getSectionID()==SectionID){
                 aimsunSection=aimsunSectionList.get(i);
             }
         }
@@ -1136,13 +770,13 @@ public class reconstructNetwork {
         List<AimsunControlPlanJunction> tmpAimsunControlPlanJunctionList=new ArrayList<AimsunControlPlanJunction>();
         List<Integer> PlanOffset=new ArrayList<Integer>();
         for (int i=0;i<aimsunControlPlanJunction.size();i++){ // Loop for each plan-junction
-            if(aimsunControlPlanJunction.get(i).JunctionID==JunctionID){ // The same junction ID
+            if(aimsunControlPlanJunction.get(i).getJunctionID()==JunctionID){ // The same junction ID
                 //Find the corresponding Master Control Plan
                 AimsunControlPlanJunction tmpAimsunControlPlanJunction=getMasterControlPlanBelongToControlPlan
                         (aimsunControlPlanJunction.get(i),aimsunMasterControlPlans);
 
                 tmpAimsunControlPlanJunctionList.add(tmpAimsunControlPlanJunction);
-                PlanOffset.add(aimsunControlPlanJunction.get(i).PlanOffset);
+                PlanOffset.add(aimsunControlPlanJunction.get(i).getPlanOffset());
             }
         }
         // Organize the control plans according to the Plan Offsets
@@ -1153,7 +787,7 @@ public class reconstructNetwork {
             List<AimsunControlPlanJunction> AimsunControlPlanJunctionList= new ArrayList<AimsunControlPlanJunction>();
             for (int i=0;i<PlanOffset.size();i++) { // Loop for each plan Offset
                 for (int j = 0; j < tmpAimsunControlPlanJunctionList.size(); j++) { // Loop for each plan-junction
-                    if (tmpAimsunControlPlanJunctionList.get(j).PlanOffset==PlanOffset.get(i)){
+                    if (tmpAimsunControlPlanJunctionList.get(j).getPlanOffset()==PlanOffset.get(i)){
                         AimsunControlPlanJunctionList.add(tmpAimsunControlPlanJunctionList.get(j));
                         break;
                     }
@@ -1175,8 +809,8 @@ public class reconstructNetwork {
 
         AimsunControlPlanJunction tmpAimsunControlPlanJunction=aimsunControlPlanJunction;
         for (int i=0;i<aimsunMasterControlPlans.size();i++){
-            if(aimsunMasterControlPlans.get(i).ControlPlanID==tmpAimsunControlPlanJunction.PlanID){
-                tmpAimsunControlPlanJunction.MasterControlPlan.add(aimsunMasterControlPlans.get(i));
+            if(aimsunMasterControlPlans.get(i).getControlPlanID()==tmpAimsunControlPlanJunction.getPlanID()){
+                tmpAimsunControlPlanJunction.getMasterControlPlan().add(aimsunMasterControlPlans.get(i));
             }
         }
         return tmpAimsunControlPlanJunction;
@@ -1194,15 +828,15 @@ public class reconstructNetwork {
 
         for (int i=0;i<aimsunJunctionList.size();i++){
             if(Type.equals("Linear")){
-                if(aimsunJunctionList.get(i).NumEntranceSections==1 &&
-                        aimsunJunctionList.get(i).NumExitSections==1){ // If not signalized & linear
+                if(aimsunJunctionList.get(i).getNumEntranceSections()==1 &&
+                        aimsunJunctionList.get(i).getNumExitSections()==1){ // If not signalized & linear
                     aimsunJunctionSelected.add(aimsunJunctionList.get(i));
                 }
             }else if(Type.equals("NonLinear")){
-                if(aimsunJunctionList.get(i).NumEntranceSections>=1 &&
-                        aimsunJunctionList.get(i).NumExitSections>=1 &&
-                        aimsunJunctionList.get(i).NumEntranceSections+
-                                aimsunJunctionList.get(i).NumExitSections >2){
+                if(aimsunJunctionList.get(i).getNumEntranceSections()>=1 &&
+                        aimsunJunctionList.get(i).getNumExitSections()>=1 &&
+                        aimsunJunctionList.get(i).getNumEntranceSections()+
+                                aimsunJunctionList.get(i).getNumExitSections() >2){
                     // If nonlinear
                     aimsunJunctionSelected.add(aimsunJunctionList.get(i));
                 }

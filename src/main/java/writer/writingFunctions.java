@@ -1,6 +1,5 @@
 package writer;
 
-import initialization.trafficInitialization.*;
 import java.util.*;
 import java.io.*;
 import commonClass.forInitialization.*;

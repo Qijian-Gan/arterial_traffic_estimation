@@ -1,7 +1,6 @@
 package test;
 
 import commonClass.forInitialization.SimVehicle;
-import initialization.trafficInitialization.*;
 import java.util.*;
 
 public class DebugCases {

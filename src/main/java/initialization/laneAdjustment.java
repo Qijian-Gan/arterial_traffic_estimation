@@ -1,9 +1,7 @@
 package initialization;
 
 import commonClass.forInitialization.*;
-import networkInput.reconstructNetwork;
-import networkInput.reconstructNetwork.*;
-
+import commonClass.forGeneralNetwork.approach.*;
 
 import java.util.HashMap;
 import java.util.List;

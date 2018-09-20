@@ -1,80 +1,21 @@
 package dataProvider;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
-import com.mysql.cj.x.protobuf.MysqlxCrud;
-import estimation.trafficStateEstimation.*;
-import networkInput.readFromAimsun;
-import networkInput.readFromAimsun.*;
-import networkInput.reconstructNetwork.*;
-
-import javax.print.attribute.standard.MediaSize;
+import commonClass.forAimsunNetwork.signalControl.*;
+import commonClass.forGeneralNetwork.*;
+import commonClass.forGeneralNetwork.approach.*;
+import commonClass.forGeneralNetwork.turning.*;
+import commonClass.forAimsunNetwork.junction.*;
+import commonClass.signalData.*;
+import commonClass.query.*;
+import commonClass.parameters.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
 
 /**
  * Created by Qijian-Gan on 12/8/2017.
  */
 public class getSignalData {
-
-    public static class PhaseInfForApproach{
-        // This the profile of phase information for a given approach
-        public PhaseInfForApproach(int _JunctionID, int _FirstSectionID, double _Time, List<SignalByMovement> _signalByMovementList){
-            this.JunctionID=_JunctionID;
-            this.FirstSectionID=_FirstSectionID;
-            this.Time=_Time;
-            this.signalByMovementList=_signalByMovementList;
-        }
-        protected int JunctionID;
-        protected int FirstSectionID;
-        protected double Time;
-        protected List<SignalByMovement> signalByMovementList;
-
-        public List<SignalByMovement> getSignalByMovementList() {
-            return signalByMovementList;
-        }
-    }
-
-    public static class SignalByMovement{
-        // This is the signal format by movement that is used to determine the proportions of queued and moving vehicles
-        public SignalByMovement(String _Movement, double _Cycle, double _GreenTime, double _RedTime, String _CurrentStatus,
-                                double _DurationSinceActivated){
-            this.Movement=_Movement;
-            this.Cycle=_Cycle;
-            this.GreenTime=_GreenTime;
-            this.RedTime=_RedTime;
-            this.CurrentStatus=_CurrentStatus;
-            this.DurationSinceActivated=_DurationSinceActivated;
-        }
-        protected String Movement;
-        protected double Cycle;
-        protected double GreenTime;
-        protected double RedTime;
-        protected String CurrentStatus;
-        protected double DurationSinceActivated;
-
-        public String getMovement() {
-            return Movement;
-        }
-
-        public double getGreenTime() {
-            return GreenTime;
-        }
-
-        public String getCurrentStatus() {
-            return CurrentStatus;
-        }
-
-        public double getDurationSinceActivated() {
-            return DurationSinceActivated;
-        }
-
-        public double getRedTime() {
-            return RedTime;
-        }
-    }
 
     /**
      *

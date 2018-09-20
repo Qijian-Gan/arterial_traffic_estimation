@@ -1,18 +1,22 @@
 package dataProvider;
 
-import com.mysql.cj.api.mysqla.result.Resultset;
-import jdk.internal.util.xml.impl.Input;
-import main.MainFunction;
-import dataProvider.loadSimulationData.*;
+import main.MainFunction;;
+import commonClass.simulationData.*;
+import commonClass.simulationData.Turning.*;
+import commonClass.simulationData.Lane.*;
+import commonClass.simulationData.Section.*;
+import commonClass.simulationData.ControlTurn.*;
+import commonClass.simulationData.ControlSignal.*;
+import commonClass.simulationData.ControlPhase.*;
+import commonClass.simulationData.Centroid.*;
+import commonClass.simulationData.SimVehicle.*;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.*;
 import java.util.*;
 /**
  * Created by Qijian-Gan on 5/30/2018.
@@ -24,48 +28,6 @@ public class getSimulationData {
     //*********************************************************************
     // Get simulation statistics
     //*********************************************************************
-    public static class SimulationStatistics{
-        // This is the profile of simulation statistics
-        public SimulationStatistics(List<TurningStatisticsByObjectID> _turningStatisticsByObjectIDList,
-                                    List<LaneStatisticsByObjectID> _laneStatisticsByObjectIDList,
-                                    List<SectionStatisticsByObjectID> _sectionStatisticsByObjectIDList,
-                                    List<ControlTurnStatisticsByObjectID> _controlTurnStatisticsByObjectIDList,
-                                    List<ControlSignalStatisticsByObjectID> _controlSignalStatisticsByObjectIDList,
-                                    List<ControlPhaseStatisticsByObjectID> _controlPhaseStatisticsByObjectIDList,
-                                    List<CentroidStatistics> _centroidStatisticsList,
-                                    List<SimVehInfBySection> _simVehInfBySectionList){
-            this.turningStatisticsByObjectIDList=_turningStatisticsByObjectIDList;
-            this.laneStatisticsByObjectIDList=_laneStatisticsByObjectIDList;
-            this.sectionStatisticsByObjectIDList=_sectionStatisticsByObjectIDList;
-            this.controlTurnStatisticsByObjectIDList=_controlTurnStatisticsByObjectIDList;
-            this.controlSignalStatisticsByObjectIDList=_controlSignalStatisticsByObjectIDList;
-            this.controlPhaseStatisticsByObjectIDList=_controlPhaseStatisticsByObjectIDList;
-            this.centroidStatisticsList=_centroidStatisticsList;
-            this.simVehInfBySectionList=_simVehInfBySectionList;
-        }
-        protected List<TurningStatisticsByObjectID> turningStatisticsByObjectIDList; // Turning information
-        protected List<LaneStatisticsByObjectID> laneStatisticsByObjectIDList; // Lane information
-        protected List<SectionStatisticsByObjectID> sectionStatisticsByObjectIDList; // Section information
-        protected List<ControlTurnStatisticsByObjectID> controlTurnStatisticsByObjectIDList; // Control turn information
-        protected List<ControlSignalStatisticsByObjectID> controlSignalStatisticsByObjectIDList; // Control signal information
-        protected List<ControlPhaseStatisticsByObjectID> controlPhaseStatisticsByObjectIDList; // Control phase information
-
-        protected List<CentroidStatistics> centroidStatisticsList; // Centroid information
-        protected List<SimVehInfBySection> simVehInfBySectionList; //Vehicle trajectories
-
-        public List<CentroidStatistics> getCentroidStatisticsList() {
-            return centroidStatisticsList;
-        }
-
-        public List<SimVehInfBySection> getSimVehInfBySectionList() {
-            return simVehInfBySectionList;
-        }
-
-        public List<LaneStatisticsByObjectID> getLaneStatisticsByObjectIDList() {
-            return laneStatisticsByObjectIDList;
-        }
-    }
-
     /**
      *
      * @param conSqlite Connection to the sqlite database
@@ -123,18 +85,6 @@ public class getSimulationData {
     //*********************************************************************
     // Get Sim_Inf
     //*********************************************************************
-    public static class SimInfFromSqlite{
-        public SimInfFromSqlite(List<Double> _fromTimeList,List<Integer> _objectIDList,List<Long> _execDateTimeList){
-            this.fromTimeList=_fromTimeList;
-            this.objectIDList=_objectIDList;
-            this.execDateTimeList=_execDateTimeList;
-        }
-        protected List<Double> fromTimeList;
-        protected List<Integer> objectIDList;
-        protected List<Long> execDateTimeList;
-
-    }
-
     /**
      *
      * @param con Database connection
@@ -189,37 +139,6 @@ public class getSimulationData {
     //*********************************************************************
     // Get the microscopic turning information
     //*********************************************************************
-    public static class TurningStatistics{
-        // This is the profile of turning statistics
-        public TurningStatistics(int _TurnID, double _TurnFlow, double _TurnSpeed){
-            this.TurnID=_TurnID;
-            this.TurnFlow=_TurnFlow;
-            this.TurnSpeed=_TurnSpeed;
-        }
-        protected int TurnID;
-        protected double TurnFlow;
-        protected double TurnSpeed;
-    }
-
-    public static class TurningStatisticsByObjectID{
-        // This is the profile of turning statistics by object ID
-        public TurningStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                ,long _ExecDateTime,List<TurningStatistics> _turningStatisticsList){
-            this.InputTime=_InputTime;
-            this.ObjectID=_ObjectID;
-            this.FromTime=_FromTime;
-            this.Interval=_Interval;
-            this.ExecDateTime=_ExecDateTime;
-            this.turningStatisticsList=_turningStatisticsList;
-        }
-        protected double InputTime;
-        protected int ObjectID;
-        protected double FromTime;
-        protected int Interval;
-        protected long ExecDateTime;
-        protected List<TurningStatistics> turningStatisticsList;
-    }
-
     /**
      *
      * @param con Database connection
@@ -233,9 +152,9 @@ public class getSimulationData {
 
         // Check the SIM_INFO table
         SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
-        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
-        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
-        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
+        List<Double> fromTimeList=simInfFromSqlite.getFromTimeList();
+        List<Integer> objectIDList=simInfFromSqlite.getObjectIDList();
+        List<Long> execDateTimeList=simInfFromSqlite.getExecDateTimeList();
 
         // Check the MITURN table
         // Parameters:
@@ -280,82 +199,6 @@ public class getSimulationData {
     //*********************************************************************
     // Get the microscopic lane information
     //*********************************************************************
-    public static class LaneStatistics{
-        // This is the profile for lane statistics
-        public LaneStatistics(int _SectionID, int _LaneID, int _VehicleType, double _LaneFlow, double _LaneFlowStd,
-                              double _LaneSpeed, double _LaneSpeedStd){
-            this.SectionID=_SectionID;
-            this.LaneID=_LaneID;
-            this.VehicleType=_VehicleType;
-            this.LaneFlow=_LaneFlow;
-            this.LaneFlowStd=_LaneFlowStd;
-            this.LaneSpeed=_LaneSpeed;
-            this.LaneSpeedStd=_LaneSpeedStd;
-        }
-        protected int SectionID;
-        protected int LaneID;
-        protected int VehicleType;
-        protected double LaneFlow;
-        protected double LaneFlowStd;
-        protected double LaneSpeed;
-        protected double LaneSpeedStd;
-
-        public int getSectionID() {
-            return SectionID;
-        }
-
-        public int getLaneID() {
-            return LaneID;
-        }
-
-        public int getVehicleType() {
-            return VehicleType;
-        }
-
-        public double getLaneFlow() {
-            return LaneFlow;
-        }
-
-        public double getLaneFlowStd() {
-            return LaneFlowStd;
-        }
-
-        public double getLaneSpeed() {
-            return LaneSpeed;
-        }
-
-        public double getLaneSpeedStd() {
-            return LaneSpeedStd;
-        }
-    }
-
-    public static class LaneStatisticsByObjectID{
-        // This is the profile of lane statistics by object ID
-        public LaneStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                ,long _ExecDateTime, List<LaneStatistics> _laneStatisticsList){
-            this.InputTime=_InputTime;
-            this.ObjectID=_ObjectID;
-            this.FromTime=_FromTime;
-            this.Interval=_Interval;
-            this.ExecDateTime=_ExecDateTime;
-            this.laneStatisticsList=_laneStatisticsList;
-        }
-        protected double InputTime;
-        protected int ObjectID;
-        protected double FromTime;
-        protected int Interval;
-        protected long ExecDateTime;
-        protected List<LaneStatistics> laneStatisticsList;
-
-        public List<LaneStatistics> getLaneStatisticsList() {
-            return laneStatisticsList;
-        }
-
-        public long getExecDateTime() {
-            return ExecDateTime;
-        }
-    }
-
     /**
      *
      * @param con Database connection
@@ -369,9 +212,9 @@ public class getSimulationData {
 
         // Check the SIM_INFO table
         SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
-        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
-        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
-        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
+        List<Double> fromTimeList=simInfFromSqlite.getFromTimeList();
+        List<Integer> objectIDList=simInfFromSqlite.getObjectIDList();
+        List<Long> execDateTimeList=simInfFromSqlite.getExecDateTimeList();
 
         // Check the MILANE table
         // did: replication ID
@@ -428,44 +271,6 @@ public class getSimulationData {
     //*********************************************************************
     // Get the microscopic section information
     //*********************************************************************
-    public static class SectionStatistics{
-        // This is the profile for section statistics
-        public SectionStatistics(int _SectionID, int _VehicleType, double _SectionFlow, double _SectionFlowStd,
-                              double _SectionSpeed, double _SectionSpeedStd){
-            this.SectionID=_SectionID;
-            this.VehicleType=_VehicleType;
-            this.SectionFlow=_SectionFlow;
-            this.SectionFlowStd=_SectionFlowStd;
-            this.SectionSpeed=_SectionSpeed;
-            this.SectionSpeedStd=_SectionSpeedStd;
-        }
-        protected int SectionID;
-        protected int VehicleType;
-        protected double SectionFlow;
-        protected double SectionFlowStd;
-        protected double SectionSpeed;
-        protected double SectionSpeedStd;
-    }
-
-    public static class SectionStatisticsByObjectID{
-        // This is the profile of section statistics by object ID
-        public SectionStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                , long _ExecDateTime, List<SectionStatistics> _SectionStatistics){
-            this.InputTime=_InputTime;
-            this.ObjectID=_ObjectID;
-            this.FromTime=_FromTime;
-            this.Interval=_Interval;
-            this.ExecDateTime=_ExecDateTime;
-            this.sectionStatisticsList=_SectionStatistics;
-        }
-        protected double InputTime;
-        protected int ObjectID;
-        protected double FromTime;
-        protected int Interval;
-        protected long ExecDateTime;
-        protected List<SectionStatistics> sectionStatisticsList;
-    }
-
     /**
      *
      * @param con Database connection
@@ -479,9 +284,9 @@ public class getSimulationData {
 
         // Check the SIM_INFO table
         SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
-        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
-        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
-        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
+        List<Double> fromTimeList=simInfFromSqlite.getFromTimeList();
+        List<Integer> objectIDList=simInfFromSqlite.getObjectIDList();
+        List<Long> execDateTimeList=simInfFromSqlite.getExecDateTimeList();
 
         // Check the MISECT table
         // did: replication ID
@@ -538,41 +343,6 @@ public class getSimulationData {
     //*********************************************************************
     // Get the microscopic control turning information
     //*********************************************************************
-    public static class ControlTurnStatistics{
-        // This is the profile of control turn statistics
-        public ControlTurnStatistics(int _TurnID, int _VehicleType,double _State,double _ActiveTime,double _ActiveTimePercentage){
-            this.TurnID=_TurnID;
-            this.VehicleType=_VehicleType;
-            this.State=_State;
-            this.ActiveTime=_ActiveTime;
-            this.ActiveTimePercentage=_ActiveTimePercentage;
-        }
-        protected int TurnID;
-        protected int VehicleType;
-        protected double State;
-        protected double ActiveTime;
-        protected double ActiveTimePercentage;
-    }
-
-    public static class ControlTurnStatisticsByObjectID{
-        // This is the profile of control turn statistics by object ID
-        public ControlTurnStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                ,long _ExecDateTime , List<ControlTurnStatistics> _ControlTurnStatistics){
-            this.InputTime=_InputTime;
-            this.ObjectID=_ObjectID;
-            this.FromTime=_FromTime;
-            this.Interval=_Interval;
-            this.ExecDateTime=_ExecDateTime;
-            this.controlTurnStatisticsList=_ControlTurnStatistics;
-        }
-        protected double InputTime;
-        protected int ObjectID;
-        protected double FromTime;
-        protected int Interval;
-        protected long ExecDateTime;
-        protected List<ControlTurnStatistics> controlTurnStatisticsList;
-    }
-
     /**
      *
      * @param con SQL connection
@@ -586,9 +356,9 @@ public class getSimulationData {
 
         // Check the SIM_INFO table
         SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
-        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
-        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
-        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
+        List<Double> fromTimeList=simInfFromSqlite.getFromTimeList();
+        List<Integer> objectIDList=simInfFromSqlite.getObjectIDList();
+        List<Long> execDateTimeList=simInfFromSqlite.getExecDateTimeList();
 
         // Check the MICONTROLTURN table
         // did: replication ID
@@ -638,44 +408,6 @@ public class getSimulationData {
     //*********************************************************************
     // Get the microscopic control signal information
     //*********************************************************************
-    public static class ControlSignalStatistics{
-        // This is the profile of control signal statistics
-        public ControlSignalStatistics(int _NodeID, int _SignalGroupID, int _VehicleType,double _State,
-                                       double _ActiveTime,double _ActiveTimePercentage){
-            this.NodeID=_NodeID;
-            this.SignalGroupID=_SignalGroupID;
-            this.VehicleType=_VehicleType;
-            this.State=_State;
-            this.ActiveTime=_ActiveTime;
-            this.ActiveTimePercentage=_ActiveTimePercentage;
-        }
-        protected int NodeID;
-        protected int SignalGroupID;
-        protected int VehicleType;
-        protected double State;
-        protected double ActiveTime;
-        protected double ActiveTimePercentage;
-    }
-
-    public static class ControlSignalStatisticsByObjectID{
-        // This is the profile of control signal statistics by object ID
-        public ControlSignalStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                ,long _ExecDateTime, List<ControlSignalStatistics> _controlSignalStatisticsList){
-            this.InputTime=_InputTime;
-            this.ObjectID=_ObjectID;
-            this.FromTime=_FromTime;
-            this.Interval=_Interval;
-            this.ExecDateTime=_ExecDateTime;
-            this.controlSignalStatisticsList=_controlSignalStatisticsList;
-        }
-        protected double InputTime;
-        protected int ObjectID;
-        protected double FromTime;
-        protected int Interval;
-        protected long ExecDateTime;
-        protected List<ControlSignalStatistics> controlSignalStatisticsList;
-    }
-
     /**
      *
      * @param con
@@ -689,9 +421,9 @@ public class getSimulationData {
 
         // Check the SIM_INFO table
         SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
-        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
-        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
-        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
+        List<Double> fromTimeList=simInfFromSqlite.getFromTimeList();
+        List<Integer> objectIDList=simInfFromSqlite.getObjectIDList();
+        List<Long> execDateTimeList=simInfFromSqlite.getExecDateTimeList();
 
         // Check the MICONTROLSIGNAL table
         // did: replication ID
@@ -744,41 +476,6 @@ public class getSimulationData {
     //*********************************************************************
     // Get the microscopic control phase information
     //*********************************************************************
-    public static class ControlPhaseStatistics{
-        // This is the profile of control phase statistics
-        public ControlPhaseStatistics(int _ControlPlanID,int _NodeID,int _PhaseID, double _ActiveTime,double _ActiveTimePercentage){
-            this.ControlPlanID=_ControlPlanID;
-            this.NodeID=_NodeID;
-            this.PhaseID=_PhaseID;
-            this.ActiveTime=_ActiveTime;
-            this.ActiveTimePercentage=_ActiveTimePercentage;
-        }
-        protected int ControlPlanID;
-        protected int NodeID;
-        protected int PhaseID;
-        protected double ActiveTime;
-        protected double ActiveTimePercentage;
-    }
-
-    public static class ControlPhaseStatisticsByObjectID{
-        // This is the profile of control phase statistics by object ID
-        public ControlPhaseStatisticsByObjectID(double _InputTime, int _ObjectID, double _FromTime, int _Interval
-                ,long _ExecDateTime, List<ControlPhaseStatistics> _controlPhaseStatisticsList){
-            this.InputTime=_InputTime;
-            this.ObjectID=_ObjectID;
-            this.FromTime=_FromTime;
-            this.Interval=_Interval;
-            this.ExecDateTime=_ExecDateTime;
-            this.controlPhaseStatisticsList=_controlPhaseStatisticsList;
-        }
-        protected double InputTime;
-        protected int ObjectID;
-        protected double FromTime;
-        protected int Interval;
-        protected long ExecDateTime;
-        protected List<ControlPhaseStatistics> controlPhaseStatisticsList;
-    }
-
     /**
      *
      * @param con Database connection
@@ -792,9 +489,9 @@ public class getSimulationData {
 
         // Check the SIM_INFO table
         SimInfFromSqlite simInfFromSqlite=GetSimInfFromSqlite(con);
-        List<Double> fromTimeList=simInfFromSqlite.fromTimeList;
-        List<Integer> objectIDList=simInfFromSqlite.objectIDList;
-        List<Long> execDateTimeList=simInfFromSqlite.execDateTimeList;
+        List<Double> fromTimeList=simInfFromSqlite.getFromTimeList();
+        List<Integer> objectIDList=simInfFromSqlite.getObjectIDList();
+        List<Long> execDateTimeList=simInfFromSqlite.getExecDateTimeList();
 
         // Check the MICONTROLPHASE table
         // did: replication ID
@@ -842,81 +539,6 @@ public class getSimulationData {
     //*********************************************************************
     // Get the microscopic centroid information
     //*********************************************************************
-    public static class CentroidStatistics{
-        // This is the profile of centroid statistics
-        public CentroidStatistics(int _SectionID, double _InputTime, double _Interval, double _DistToStopbarThreshold, List<int[]> _ODList,
-                                  List<int[]> _DownstreamODList,List<ODByLane> _ODListByLane,List<ODByLane> _DownstreamODListByLane){
-            this.SectionID=_SectionID;
-            this.InputTime=_InputTime;
-            this.Interval=_Interval;
-            this.DistToStopbarThreshold=_DistToStopbarThreshold;
-            this.ODList=_ODList;
-            this.DownstreamODList=_DownstreamODList;
-            this.ODListByLane=_ODListByLane;
-            this.DownstreamODListByLane=_DownstreamODListByLane;
-        }
-        protected int SectionID;
-        protected double InputTime;
-        protected double Interval;
-        protected double DistToStopbarThreshold; // Used to calculate ODList & ODListByLane in the downstream
-        protected List<int[]> ODList;
-        protected List<int[]> DownstreamODList;
-        protected List<ODByLane> ODListByLane;
-        protected List<ODByLane> DownstreamODListByLane;
-
-        public int getSectionID() {
-            return SectionID;
-        }
-
-        public List<int[]> getODList() {
-            return ODList;
-        }
-
-        public List<ODByLane> getDownstreamODListByLane() {
-            return DownstreamODListByLane;
-        }
-
-        public List<ODByLane> getODListByLane() {
-            return ODListByLane;
-        }
-    }
-
-    public static class ODByLane{
-        // This is the profile of OD information by Lane ID
-        public ODByLane(int _LaneID, List<int[]> _ODList){
-            this.LaneID=_LaneID;
-            this.ODList=_ODList;
-        }
-        protected int LaneID;
-        protected List<int[]> ODList;
-
-        public int getLaneID() {
-            return LaneID;
-        }
-
-        public List<int[]> getODList() {
-            return ODList;
-        }
-    }
-
-    public static class SimVehODInf{
-        // This is the property of simulated vehicle's OD information
-        public SimVehODInf(int _SectionID,int _LaneID,int _VehicleType,int _CentroidOrigin,int _CentroidDestination,double _DistanceToEnd){
-            this.SectionID=_SectionID;
-            this.LaneID=_LaneID;
-            this.VehicleType=_VehicleType;
-            this.CentroidOrigin=_CentroidOrigin;
-            this.CentroidDestination=_CentroidDestination;
-            this.DistanceToEnd=_DistanceToEnd;
-        }
-        protected int SectionID;
-        protected int LaneID;
-        protected int VehicleType;
-        protected int CentroidOrigin;
-        protected int CentroidDestination;
-        protected double DistanceToEnd;
-    }
-
     /**
      *
      * @param con Database connection
@@ -975,7 +597,7 @@ public class getSimulationData {
         // Get the unique set of section IDs
         HashSet<Integer> UniqueSections=new HashSet<Integer>();
         for(int i=0;i<simVehODInfList.size();i++){
-            UniqueSections.add(simVehODInfList.get(i).SectionID);
+            UniqueSections.add(simVehODInfList.get(i).getSectionID());
         }
         // Index for searching
         int[] SearchIndex= new int[simVehODInfList.size()];
@@ -994,48 +616,48 @@ public class getSimulationData {
             List<ODByLane> DownstreamODListByLane=new ArrayList<ODByLane>(); // By section-lane
 
             for(int i=0;i<simVehODInfList.size();i++){ // Loop for each simulation vehicle
-                if(SearchIndex[i]==0 && simVehODInfList.get(i).SectionID==SectionID){ // Find the section ID not visited
+                if(SearchIndex[i]==0 && simVehODInfList.get(i).getSectionID()==SectionID){ // Find the section ID not visited
                     SearchIndex[i]=1; // Set visited
-                    ODList.add(new int []{simVehODInfList.get(i).CentroidOrigin,simVehODInfList.get(i).CentroidDestination
-                            ,simVehODInfList.get(i).VehicleType});
-                    if(simVehODInfList.get(i).DistanceToEnd<DistToStopbarThreshold){
-                        DownstreamODList.add(new int []{simVehODInfList.get(i).CentroidOrigin,simVehODInfList.get(i).CentroidDestination,
-                                simVehODInfList.get(i).VehicleType});
+                    ODList.add(new int []{simVehODInfList.get(i).getCentroidOrigin(),simVehODInfList.get(i).getCentroidDestination()
+                            ,simVehODInfList.get(i).getVehicleType()});
+                    if(simVehODInfList.get(i).getDistanceToEnd()<DistToStopbarThreshold){
+                        DownstreamODList.add(new int []{simVehODInfList.get(i).getCentroidOrigin(),simVehODInfList.get(i).getCentroidDestination(),
+                                simVehODInfList.get(i).getVehicleType()});
                     }
                     // sorted by lane
-                    int LaneID=simVehODInfList.get(i).LaneID;
+                    int LaneID=simVehODInfList.get(i).getLaneID();
                     boolean LaneFound=false;
                     for(int j=0;j<ODListByLane.size();j++){
-                        if(ODListByLane.get(j).LaneID==LaneID){
-                            ODListByLane.get(j).ODList.add(new int []{simVehODInfList.get(i).CentroidOrigin,simVehODInfList.get(i).CentroidDestination,
-                                    simVehODInfList.get(i).VehicleType});
+                        if(ODListByLane.get(j).getLaneID()==LaneID){
+                            ODListByLane.get(j).getODList().add(new int []{simVehODInfList.get(i).getCentroidOrigin(),simVehODInfList.get(i).getCentroidDestination(),
+                                    simVehODInfList.get(i).getVehicleType()});
                             LaneFound=true;
                             break;
                         }
                     }
                     if(!LaneFound){ // A new lane? append it to the end
                         List<int[]> tmpODList=new ArrayList<int[]>();
-                        tmpODList.add(new int []{simVehODInfList.get(i).CentroidOrigin,simVehODInfList.get(i).CentroidDestination,
-                                simVehODInfList.get(i).VehicleType});
+                        tmpODList.add(new int []{simVehODInfList.get(i).getCentroidOrigin(),simVehODInfList.get(i).getCentroidDestination(),
+                                simVehODInfList.get(i).getVehicleType()});
                         ODListByLane.add(new ODByLane(LaneID,tmpODList));
                     }
 
                     // Sort by lane and downstream distance threshold
-                    if(simVehODInfList.get(i).DistanceToEnd<DistToStopbarThreshold){
+                    if(simVehODInfList.get(i).getDistanceToEnd()<DistToStopbarThreshold){
                         boolean LaneDownstreamFound=false;
                         for(int j=0;j<DownstreamODListByLane.size();j++){
-                            if(DownstreamODListByLane.get(j).LaneID==LaneID){
-                                DownstreamODListByLane.get(j).ODList.add
-                                        (new int []{simVehODInfList.get(i).CentroidOrigin,simVehODInfList.get(i).CentroidDestination,
-                                                simVehODInfList.get(i).VehicleType});
+                            if(DownstreamODListByLane.get(j).getLaneID()==LaneID){
+                                DownstreamODListByLane.get(j).getODList().add
+                                        (new int []{simVehODInfList.get(i).getCentroidOrigin(),simVehODInfList.get(i).getCentroidDestination(),
+                                                simVehODInfList.get(i).getVehicleType()});
                                 LaneDownstreamFound=true;
                                 break;
                             }
                         }
                         if(!LaneDownstreamFound){ // A new lane? append it to the end
                             List<int[]> tmpODList=new ArrayList<int[]>();
-                            tmpODList.add(new int []{simVehODInfList.get(i).CentroidOrigin,simVehODInfList.get(i).CentroidDestination,
-                                    simVehODInfList.get(i).VehicleType});
+                            tmpODList.add(new int []{simVehODInfList.get(i).getCentroidOrigin(),simVehODInfList.get(i).getCentroidDestination(),
+                                    simVehODInfList.get(i).getVehicleType()});
                             DownstreamODListByLane.add(new ODByLane(LaneID,tmpODList));
                         }
                     }
@@ -1052,28 +674,6 @@ public class getSimulationData {
     //*********************************************************************
     // Get the microscopic vehicle trajectory data
     //*********************************************************************
-    public static class SimVehInfBySection{
-        // This is the profile of vehicle trajectories by section
-        public SimVehInfBySection(int _SectionID, double _InputTime, double _SelectTime, List<AimsunVehInf> _aimsunVehInfList){
-            this.SectionID=_SectionID;
-            this.InputTime=_InputTime;
-            this.SelecTime=_SelectTime;
-            this.aimsunVehInfList=_aimsunVehInfList;
-        }
-        protected int SectionID;
-        protected double InputTime;
-        protected double SelecTime;
-        protected List<AimsunVehInf> aimsunVehInfList;
-
-        public int getSectionID() {
-            return SectionID;
-        }
-
-        public List<AimsunVehInf> getAimsunVehInfList() {
-            return aimsunVehInfList;
-        }
-    }
-
     /**
      *
      * @param con Database connection
@@ -1122,7 +722,7 @@ public class getSimulationData {
             // Get the unique set of section IDs
             HashSet<Integer> UniqueSections=new HashSet<Integer>();
             for(int i=0;i<aimsunVehInfList.size();i++){
-                UniqueSections.add(aimsunVehInfList.get(i).SectionID);
+                UniqueSections.add(aimsunVehInfList.get(i).getSectionID());
             }
             // Index for searching
             int[] SearchIndex= new int[aimsunVehInfList.size()];
@@ -1137,7 +737,7 @@ public class getSimulationData {
                 // Initialization
                 List<AimsunVehInf> tmpAimsunVehInfList=new ArrayList<AimsunVehInf>();
                 for(int i=0;i<aimsunVehInfList.size();i++){// Loop for each vehicle trajectory point
-                    if(SearchIndex[i]==0 && aimsunVehInfList.get(i).SectionID==SectionID){// Find the section ID
+                    if(SearchIndex[i]==0 && aimsunVehInfList.get(i).getSectionID()==SectionID){// Find the section ID
                         SearchIndex[i]=1;
                         tmpAimsunVehInfList.add(aimsunVehInfList.get(i));
                     }

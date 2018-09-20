@@ -1,11 +1,10 @@
 package initialization;
 
-import dataProvider.getSimulationData.*;
-import dataProvider.getSimulationData;
 import commonClass.forInitialization.*;
-import networkInput.readFromAimsun.*;
-import networkInput.reconstructNetwork.*;
-import initialization.trafficInitialization.*;
+import commonClass.forGeneralNetwork.approach.*;
+import commonClass.forAimsunNetwork.section.*;
+import commonClass.simulationData.Centroid.*;
+import commonClass.simulationData.SimulationStatistics;
 
 import java.util.*;
 
@@ -93,7 +92,7 @@ public class assignVehicleWithODAndLane {
         List<SimVehicle> VehicleUnAssignedMoving=vehicleAssignmentTmpStr.getVehicleUnAssignedMoving();
 
         // Get next section's centroid statistics
-        getSimulationData.CentroidStatistics centroidStatistics=null;
+        CentroidStatistics centroidStatistics=null;
         for(int i=0;i<simulationStatistics.getCentroidStatisticsList().size();i++){
             if(simulationStatistics.getCentroidStatisticsList().get(i).getSectionID()==SectionID){
                 centroidStatistics=simulationStatistics.getCentroidStatisticsList().get(i);

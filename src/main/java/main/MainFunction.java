@@ -12,17 +12,19 @@ import config.loadProgramSettingsFromFile;
 import dataProvider.*;
 import settings.programSettings;
 import networkInput.readFromAimsun;
-import networkInput.readFromAimsun.*;
 import networkInput.reconstructNetwork;
 import connectors.extractNetworkFile;
 import estimation.trafficStateEstimation;
-import estimation.trafficStateEstimation.*;
 import initialization.trafficInitialization;
-import dataProvider.getSimulationData.*;
-import dataProvider.getEstimationResults.*;
 import writer.writingFunctions;
 import commonClass.forInitialization.*;
-
+import commonClass.forAimsunNetwork.*;
+import commonClass.forGeneralNetwork.*;
+import commonClass.forAimsunNetwork.signalControl.*;
+import commonClass.estimationData.*;
+import commonClass.query.*;
+import commonClass.forEstimation.*;
+import commonClass.simulationData.SimulationStatistics;
 
 public class MainFunction{
 
@@ -89,7 +91,7 @@ public class MainFunction{
                 System.out.println("Missing the folder name!");
                 System.exit(-1);
             }
-            networkInput.readFromAimsun.AimsunNetwork aimsunNetwork=readFromAimsun.readAimsunNetworkFiles();
+            AimsunNetwork aimsunNetwork=readFromAimsun.readAimsunNetworkFiles();
         }else if(taksID==3){
             System.out.print("3:  Read and reconstruct the Aimsun network files\n"); // Read and reconstruct the network files
             if(cBlock.AimsunFolder ==null){
@@ -134,7 +136,7 @@ public class MainFunction{
             int StartTime=Math.max(0,EndTime-Interval*3);
 
             // Reconstruct the network by approach
-            reconstructNetwork.AimsunNetworkByApproach aimsunNetworkByApproach =reconstructNetwork.reconstructAimsunNetwork();
+            AimsunNetworkByApproach aimsunNetworkByApproach =reconstructNetwork.reconstructAimsunNetwork();
 
             // Set query measures
             QueryMeasures queryMeasures=new QueryMeasures(-1,-1,-1,
@@ -182,7 +184,7 @@ public class MainFunction{
                     8,true, new int []{StartTime,EndTime},Interval);
 
             // Reconstruct the network by approach
-            reconstructNetwork.AimsunNetworkByApproach aimsunNetworkByApproach =reconstructNetwork.reconstructAimsunNetwork();
+            AimsunNetworkByApproach aimsunNetworkByApproach =reconstructNetwork.reconstructAimsunNetwork();
 
             // Get the simulation statistics
             hostAimsunSimulationSqlite="jdbc:sqlite:"+cBlock.sqliteFileLocation+"\\"+cBlock.sqliteFileName;

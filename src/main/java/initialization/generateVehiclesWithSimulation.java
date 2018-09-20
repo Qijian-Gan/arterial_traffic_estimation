@@ -1,11 +1,9 @@
 package initialization;
 
-import dataProvider.getSimulationData;
-import dataProvider.getSimulationData.*;
-import dataProvider.loadSimulationData;
 import commonClass.forInitialization.*;
-import networkInput.reconstructNetwork;
-import networkInput.reconstructNetwork.*;
+import commonClass.forGeneralNetwork.approach.*;
+import commonClass.simulationData.SimVehicle.*;
+import commonClass.simulationData.SimulationStatistics;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +44,7 @@ public class generateVehiclesWithSimulation {
         List<Integer> ListOfSections=aimsunApproach.getSectionBelongToApproach().getListOfSections();
 
         // Select the vehicle trajectories within the ListOfSections
-        List<getSimulationData.SimVehInfBySection> SelectedSimVehInf=new ArrayList<getSimulationData.SimVehInfBySection>();
+        List<SimVehInfBySection> SelectedSimVehInf=new ArrayList<SimVehInfBySection>();
         for(int i=0;i<ListOfSections.size();i++){// Loop for each section
             for(int j=0;j<simVehInfBySectionList.size();j++){ // Loop for the available set of sections
                 if(simVehInfBySectionList.get(j).getSectionID()==ListOfSections.get(i)){// Find the right one
@@ -62,7 +60,7 @@ public class generateVehiclesWithSimulation {
                     " and Section:"+FirstSectionID);
         }else{
             for(int i=0;i<SelectedSimVehInf.size();i++){ // Loop for each section
-                List<loadSimulationData.AimsunVehInf> tmpSimVehicleList=SelectedSimVehInf.get(i).getAimsunVehInfList();
+                List<AimsunVehInf> tmpSimVehicleList=SelectedSimVehInf.get(i).getAimsunVehInfList();
                 for(int j=0;j<SelectedSimVehInf.get(i).getAimsunVehInfList().size();j++){ // Loop for each vehicle
                     int SectionID=tmpSimVehicleList.get(j).getSectionID();
                     int LaneID=tmpSimVehicleList.get(j).getLaneID();

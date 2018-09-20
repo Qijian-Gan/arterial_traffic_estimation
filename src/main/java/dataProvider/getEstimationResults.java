@@ -4,44 +4,12 @@ import java.sql.Connection;
 import java.util.*;
 import java.sql.*;
 
-import com.intellij.util.Function;
-import estimation.trafficStateEstimation.*;
+import commonClass.estimationData.*;
+import commonClass.query.*;
+import commonClass.forEstimation.*;
+import commonClass.parameters.*;
 
 public class getEstimationResults {
-
-    public static class EstimationResults{
-        public EstimationResults(int _JunctionID, String _JunctionName, int _FirstSectionID, String _FirstSectionName, int _Time,
-                                 AssessmentStateAndQueue _assessmentStateAndQueue,Parameters _parameters, long _UpdateDateTime){
-            this.JunctionID=_JunctionID;
-            this.JunctionName=_JunctionName;
-            this.FirstSectionID=_FirstSectionID;
-            this.FirstSectionName=_FirstSectionName;
-            this.Time=_Time;
-            this.assessmentStateAndQueue=_assessmentStateAndQueue;
-            this.parameters=_parameters;
-            this.UpdateDateTime=_UpdateDateTime;
-        }
-        protected int JunctionID;
-        protected String JunctionName;
-        protected int FirstSectionID;
-        protected String FirstSectionName;
-        protected int Time;
-        protected AssessmentStateAndQueue assessmentStateAndQueue;
-        protected Parameters parameters;
-        protected long UpdateDateTime;
-
-        public AssessmentStateAndQueue getAssessmentStateAndQueue() {
-            return assessmentStateAndQueue;
-        }
-
-        public Parameters getParameters() {
-            return parameters;
-        }
-
-        public int getTime() {
-            return Time;
-        }
-    }
 
     /**
      *

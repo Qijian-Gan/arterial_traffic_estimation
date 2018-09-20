@@ -1,13 +1,12 @@
 package dataProvider;
 
-import main.MainFunction;
+import commonClass.simulationData.SimVehicle.*;
+import commonClass.simulationData.SimSignal.*;
 import util.util;
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -20,82 +19,6 @@ import java.util.*;
  */
 public class loadSimulationData {
     // This function is used to load simulation data from Aimsun to the MySQL database.
-
-    public static class AimsunSigInf{
-        // This is the profile of Aimsun signal information
-        public AimsunSigInf(double _TimeRelative, double _Time, int _JunctionID, int _ControlType, int _ControlPlanIndex,
-                                      int _NumOfRings, String _PhaseAndStartTimeInRing){
-            this.TimeRelative=_TimeRelative;
-            this.Time=_Time;
-            this.JunctionID=_JunctionID;
-            this.ControlType=_ControlType;
-            this.ControlPlanIndex=_ControlPlanIndex;
-            this.NumOfRings=_NumOfRings;
-            this.PhaseAndStartTimeInRing=_PhaseAndStartTimeInRing;
-        }
-        protected double TimeRelative;
-        protected double Time;
-        protected int JunctionID;
-        protected int ControlType;
-        protected int ControlPlanIndex;
-        protected int NumOfRings;
-        protected String PhaseAndStartTimeInRing;
-    }
-
-    public static class AimsunVehInf{
-        // This is the profile of Aimsun vehicle information
-        public AimsunVehInf(double _Time, int _VehicleID, int _VehicleType, int _SectionID, int _LaneID, double _CurrentPosition
-                , double _CurrentSpeed, int _CentroidOrigin, int _CentroidDestination, double _DistanceToEnd){
-            this.Time=_Time;
-            this.VehicleID=_VehicleID;
-            this.VehicleType=_VehicleType;
-            this.SectionID=_SectionID;
-            this.LaneID=_LaneID;
-            this.CurrentPosition=_CurrentPosition;
-            this.CurrentSpeed=_CurrentSpeed;
-            this.CentroidOrigin=_CentroidOrigin;
-            this.CentroidDestination=_CentroidDestination;
-            this.DistanceToEnd=_DistanceToEnd;
-        }
-        protected double Time;
-        protected int VehicleID;
-        protected int VehicleType;
-        protected int SectionID;
-        protected int LaneID;
-        protected double CurrentPosition;
-        protected double CurrentSpeed;
-        protected int CentroidOrigin;
-        protected int CentroidDestination;
-        protected double DistanceToEnd;
-
-        public int getSectionID() {
-            return SectionID;
-        }
-
-        public int getCentroidOrigin() {
-            return CentroidOrigin;
-        }
-
-        public double getCurrentPosition() {
-            return CurrentPosition;
-        }
-
-        public int getVehicleType() {
-            return VehicleType;
-        }
-
-        public double getCurrentSpeed() {
-            return CurrentSpeed;
-        }
-
-        public int getLaneID() {
-            return LaneID;
-        }
-
-        public int getCentroidDestination() {
-            return CentroidDestination;
-        }
-    }
 
     //************************************************************************************
     // Vehicle information
@@ -181,11 +104,11 @@ public class loadSimulationData {
         HashSet<String> stringHashSet= new HashSet<String>();; // Create the hash set
         for(int i=0;i<aimsunVehInfList.size();i++){
             AimsunVehInf aimsunVehInf=aimsunVehInfList.get(i);
-            String sql=Header+" values (\""+aimsunVehInf.Time+"\",\""+aimsunVehInf.VehicleID+"\",\""+
-                    aimsunVehInf.VehicleType+"\",\""+aimsunVehInf.SectionID+"\",\""+aimsunVehInf.LaneID+"\",\""+
-                    aimsunVehInf.CurrentPosition+"\",\""+aimsunVehInf.CurrentSpeed+"\",\""+
-                    aimsunVehInf.CentroidOrigin+"\",\""+aimsunVehInf.CentroidDestination+"\",\""+aimsunVehInf.DistanceToEnd+"\");";
-            if(stringHashSet.add(aimsunVehInf.Time+"-"+aimsunVehInf.VehicleID+"-"+aimsunVehInf.SectionID+"-"+aimsunVehInf.LaneID)) {
+            String sql=Header+" values (\""+aimsunVehInf.getTime()+"\",\""+aimsunVehInf.getVehicleID()+"\",\""+
+                    aimsunVehInf.getVehicleType()+"\",\""+aimsunVehInf.getSectionID()+"\",\""+aimsunVehInf.getLaneID()+"\",\""+
+                    aimsunVehInf.getCurrentPosition()+"\",\""+aimsunVehInf.getCurrentSpeed()+"\",\""+
+                    aimsunVehInf.getCentroidOrigin()+"\",\""+aimsunVehInf.getCentroidDestination()+"\",\""+aimsunVehInf.getDistanceToEnd()+"\");";
+            if(stringHashSet.add(aimsunVehInf.getTime()+"-"+aimsunVehInf.getVehicleID()+"-"+aimsunVehInf.getSectionID()+"-"+aimsunVehInf.getLaneID())) {
                 sqlStatements.add(sql);
             }
         }
@@ -282,10 +205,10 @@ public class loadSimulationData {
         HashSet<String> stringHashSet= new HashSet<String>();; // Create the hash set
         for(int i=0;i<aimsunSigInfList.size();i++){
             AimsunSigInf aimsunSigInf=aimsunSigInfList.get(i);
-            String sql=Header+" values (\""+aimsunSigInf.TimeRelative+"\",\""+aimsunSigInf.Time+"\",\""+
-                    aimsunSigInf.JunctionID+"\",\""+aimsunSigInf.ControlType+"\",\""+aimsunSigInf.ControlPlanIndex+"\",\""+
-                    aimsunSigInf.NumOfRings+"\",\""+aimsunSigInf.PhaseAndStartTimeInRing+"\");";
-            if(stringHashSet.add(aimsunSigInf.Time+"-"+aimsunSigInf.JunctionID+"-"+aimsunSigInf.ControlType+"-"+aimsunSigInf.ControlPlanIndex)) {
+            String sql=Header+" values (\""+aimsunSigInf.getTimeRelative()+"\",\""+aimsunSigInf.getTime()+"\",\""+
+                    aimsunSigInf.getJunctionID()+"\",\""+aimsunSigInf.getControlType()+"\",\""+aimsunSigInf.getControlPlanIndex()+"\",\""+
+                    aimsunSigInf.getNumOfRings()+"\",\""+aimsunSigInf.getPhaseAndStartTimeInRing()+"\");";
+            if(stringHashSet.add(aimsunSigInf.getTime()+"-"+aimsunSigInf.getJunctionID()+"-"+aimsunSigInf.getControlType()+"-"+aimsunSigInf.getControlPlanIndex())) {
                 sqlStatements.add(sql);
             }
         }

@@ -3,11 +3,12 @@ package initialization;
 /**
  * Created by Qijian-Gan on 5/23/2018.
  */
-import networkInput.readFromAimsun.*;
-import networkInput.reconstructNetwork.*;
-import dataProvider.getSimulationData.*;
-import dataProvider.getEstimationResults.*;
+
 import commonClass.forInitialization.*;
+import commonClass.forGeneralNetwork.approach.*;
+import commonClass.forAimsunNetwork.signalControl.*;
+import commonClass.estimationData.*;
+import commonClass.simulationData.SimulationStatistics;
 
 import java.util.*;
 

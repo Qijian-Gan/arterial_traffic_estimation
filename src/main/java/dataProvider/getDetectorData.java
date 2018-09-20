@@ -1,7 +1,7 @@
 package dataProvider;
 
-import estimation.trafficStateEstimation;
-
+import commonClass.detectorData.*;
+import commonClass.query.*;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -17,59 +17,6 @@ import java.util.List;
 public class getDetectorData {
     // This is the function to get detector data
 
-    public static class SelectedDetectorData{
-        // This is the data profile after queries
-        public SelectedDetectorData(int _DetectorID, double[][] _DataAll, CategorizedData _categorizedData,
-                                    double[][] _DataAvgByTime,double[][] _DataMidByTime, double[] _FlowOccAvg,
-                                    double[] _FlowOccMid,String _Health){
-            this.DetectorID=_DetectorID;
-            this.DataAll=_DataAll;
-            this.categorizedData=_categorizedData;
-            this.DataAvgByTime=_DataAvgByTime;
-            this.DataMidByTime=_DataMidByTime;
-            this.FlowOCCAvg=_FlowOccAvg;
-            this.FlowOccMid=_FlowOccMid;
-            this.Health=_Health;
-        }
-        protected int DetectorID; // Detector ID
-        protected double [][] DataAll=null;  // Time, Flow, Occupancy (All)
-        protected CategorizedData categorizedData;
-        protected double [][] DataAvgByTime=null; // Time, Flow, Occupancy (Median)
-        protected double [][] DataMidByTime=null; // Time, Flow, Occupancy (Average)
-        protected double[] FlowOCCAvg=null; // Averaged Flow & Occupancy over all data
-        protected double[] FlowOccMid=null; // Median Flow & Occupancy over all data
-        protected String Health; // Health index over all data
-
-
-        public String getHealth() {
-            return Health;
-        }
-
-        public double[][] getDataAll() {
-            return DataAll;
-        }
-
-        public double[] getFlowOCCAvg() {
-            return FlowOCCAvg;
-        }
-
-        public double[] getFlowOccMid() {
-            return FlowOccMid;
-        }
-    }
-
-    public static class CategorizedData{
-        // This is the profile of categorized data
-        public CategorizedData(List<Double> _Time,List<List<Double>> _CategorizedFlow,List<List<Double>> _CategorizedOcc){
-            this.Time=_Time;
-            this.CategorizedFlow=_CategorizedFlow;
-            this.CategorizedOcc=_CategorizedOcc;
-        }
-        protected List<Double> Time;
-        protected List<List<Double>> CategorizedFlow;
-        protected List<List<Double>> CategorizedOcc;
-    }
-
     /**
      *
      * @param ps SQL Statement
@@ -77,7 +24,7 @@ public class getDetectorData {
      * @param queryMeasures Query measures
      * @return SelectedDetectorData
      */
-    public static SelectedDetectorData getDataForGivenDetector(Statement ps, int DetectorID, trafficStateEstimation.QueryMeasures queryMeasures){
+    public static SelectedDetectorData getDataForGivenDetector(Statement ps, int DetectorID, QueryMeasures queryMeasures){
         // This is the function to get Processed data for a given detector
 
         // Get the Year, Month, Day settings setting
@@ -153,18 +100,18 @@ public class getDetectorData {
         double [][] Data=null;
         if(categorizedData!=null){
             // Initialization
-            int NumInterval=categorizedData.Time.size();
+            int NumInterval=categorizedData.getTime().size();
             Data=new double[NumInterval][3];
             for(int i=0;i<NumInterval;i++) {
                 // Loop for each interval
-                Data[i][0]=categorizedData.Time.get(i);
+                Data[i][0]=categorizedData.getTime().get(i);
                 if(Type.equals("Median")){
-                    Data[i][1]=getMedianFromList(categorizedData.CategorizedFlow.get(i));
-                    Data[i][2]=getMedianFromList(categorizedData.CategorizedOcc.get(i));
+                    Data[i][1]=getMedianFromList(categorizedData.getCategorizedFlow().get(i));
+                    Data[i][2]=getMedianFromList(categorizedData.getCategorizedOcc().get(i));
                 }else if(Type.equals("Average"))
                 {
-                    Data[i][1]=getAverageFromList(categorizedData.CategorizedFlow.get(i));
-                    Data[i][2]=getAverageFromList(categorizedData.CategorizedOcc.get(i));
+                    Data[i][1]=getAverageFromList(categorizedData.getCategorizedFlow().get(i));
+                    Data[i][2]=getAverageFromList(categorizedData.getCategorizedOcc().get(i));
                 }else{
                     System.out.println("Unknown type of method!");
                     System.exit(-1);
