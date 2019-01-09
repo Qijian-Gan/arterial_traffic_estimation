@@ -64,4 +64,6 @@ public class programSettings {
     public String vehInfFolder;  // simulation vehicle information
     public String sigInfFolder;  // simulation signal information
 
+    public String bluetoothFolder;// Bluetooth travel time folder location
+    public String bluetoothOutputFolder;// Bluetooth travel time output folder location
 }

@@ -17,6 +17,8 @@ public class getTaskID {
         System.out.print("4:  Load Aimsun simulation data to database\n"); // Load Aimsun simulation results
         System.out.print("5:  Arterial traffic estimation\n"); // Arterial traffic estimation
         System.out.print("6:  Arterial traffic initialization\n"); // Arterial traffic initialization
+        System.out.print("7:  Load Bluetooth travel time data\n"); // Bluetooth travel time
+        System.out.print("8:  Validate queue estimates with Bluetooth travel time\n"); // Validation
         System.out.print("Please enter your selection (number):");
         taskID =Integer.parseInt(scanner.next());
         return taskID;

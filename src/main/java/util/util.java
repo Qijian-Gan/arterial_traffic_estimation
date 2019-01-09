@@ -9,6 +9,69 @@ public class util {
 
     /**
      *
+     * @param DateNum YYYYMMDD
+     * @return DateString MM/DD/YYYY
+     */
+    public static String convertDateNumToDateString(int DateNum){
+        //This function is used to convert data string to integer with slash
+
+        int Year=Math.floorDiv(DateNum,10000);
+        int Month=Math.floorDiv(Math.floorMod(DateNum,10000),100);
+        int Day=Math.floorMod(DateNum,100);
+
+        String DateString;
+        if(Month<10){
+            DateString="0"+Month+"/";
+        }else{
+            DateString=Month+"/";
+        }
+        if(Day<10){
+            DateString=DateString+"0"+Day+"/";
+        }else{
+            DateString=DateString+Day+"/";
+        }
+        DateString=DateString+Year;
+        return DateString;
+    }
+    /**
+     *
+     * @param DateStr: MM/DD/YYYY
+     * @return Date: YYYYMMDD
+     */
+    public static int convertDateStringToIntegerWithSlash(String DateStr){
+        //This function is used to convert data string to integer with slash
+
+        String [] tmpString=DateStr.split("/");
+        int Date=Integer.parseInt(tmpString[2])*10000+Integer.parseInt(tmpString[0])*100+Integer.parseInt(tmpString[1]);
+        return Date;
+    }
+
+    /**
+     *
+     * @param TimeStr HH:MM:SS AM/PM
+     * @return TotSeconds: seconds (Integer)
+     */
+    public static int convertTimeStringToSecondsWithColon(String TimeStr){
+        // This function is used to convert time string to seconds (integer) with colon
+        String [] tmpString=TimeStr.split(" ");
+        String [] TimeIn12HourStr=(tmpString[0].trim()).split(":");
+        String AMOrPM=tmpString[1];
+        int Hour=Integer.parseInt(TimeIn12HourStr[0].trim());
+        if(Hour==12){// First, check the case of 12:??:??
+            Hour=0;
+        }
+        if(AMOrPM.equals("PM")){
+            Hour=Hour+12;
+        }
+        int Minute=Integer.parseInt(TimeIn12HourStr[1].trim());
+        int Second=Integer.parseInt(TimeIn12HourStr[2].trim());
+
+        int TotSeconds=Hour*3600+Minute*60+Second;
+        return TotSeconds;
+    }
+
+    /**
+     *
      * @param Input double[]
      * @return double
      */

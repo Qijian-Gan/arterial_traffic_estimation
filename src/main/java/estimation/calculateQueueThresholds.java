@@ -103,7 +103,8 @@ public class calculateQueueThresholds {
                 , LanePortionByMovement, NumJamVehPerLane, LTPocket, DistanceToAdvanceDetector,aimsunApproach, parameters,"Left");
         QueueThresholdByMovement queueThresholdRight=ForMovement(NumExclusiveRTLanes,LanePortionByMovementAdvance
                 , LanePortionByMovement, NumJamVehPerLane, RTPocket, DistanceToAdvanceDetector,aimsunApproach, parameters, "Right");
-        QueueThresholdByMovement queueThresholdThrough=ForMovement(0,LanePortionByMovementAdvance
+        QueueThresholdByMovement queueThresholdThrough=
+                ForMovement(0,LanePortionByMovementAdvance
                 , LanePortionByMovement, NumJamVehPerLane, Math.max(LTPocket,RTPocket), DistanceToAdvanceDetector,
                 aimsunApproach, parameters,"Through");
 

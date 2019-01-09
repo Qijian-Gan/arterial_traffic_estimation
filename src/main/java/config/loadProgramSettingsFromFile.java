@@ -24,152 +24,203 @@ public class loadProgramSettingsFromFile {
                 if ((confLine.length() > 0) && (!confLine.trim().startsWith("#", 0))) {
                     String[] tokens = confLine.split("=");
 
+                    String [] tmp;
+                    switch (tokens[0]){
                     // User name & password
-                    if(tokens[0].equals("userName"))
-                        cBlock.userName=tokens[1].trim();
-                    else if(tokens[0].equals("password")){
-                        cBlock.password=tokens[1].trim();
-                    }
+                        case "userName":
+                            cBlock.userName=tokens[1].trim();
+                            break;
+                        case "password":
+                            cBlock.password=tokens[1].trim();
+                            break;
+
                     // Aimsun settings
-                    else if(tokens[0].equals("AimsunFolder")){
-                        cBlock.AimsunFolder=tokens[1].trim();
-                    }else if(tokens[0].equals("AimsunFileName")){
-                        cBlock.AimsunFileName=tokens[1].trim();
-                    }else if(tokens[0].equals("AimsunNetExtractionScriptName")){
-                        cBlock.AimsunNetExtractionScriptName=tokens[1].trim();
-                    }else if(tokens[0].equals("JunctionYes")){
-                        cBlock.JunctionYes=tokens[1].trim();
-                    }else if(tokens[0].equals("SectionYes")){
-                        cBlock.SectionYes=tokens[1].trim();
-                    }else if(tokens[0].equals("DetectorYes")){
-                        cBlock.DetectorYes=tokens[1].trim();
-                    }else if(tokens[0].equals("SignalYes")){
-                        cBlock.SignalYes=tokens[1].trim();
-                    }
+                        case "AimsunFolder":
+                            cBlock.AimsunFolder=tokens[1].trim();
+                            break;
+                        case "AimsunFileName":
+                            cBlock.AimsunFileName=tokens[1].trim();
+                            break;
+                        case "AimsunNetExtractionScriptName":
+                            cBlock.AimsunNetExtractionScriptName=tokens[1].trim();
+                            break;
+                        case "JunctionYes":
+                            cBlock.JunctionYes=tokens[1].trim();
+                            break;
+                        case "SectionYes":
+                            cBlock.SectionYes=tokens[1].trim();
+                            break;
+                        case "DetectorYes":
+                            cBlock.DetectorYes=tokens[1].trim();
+                            break;
+                        case "SignalYes":
+                            cBlock.SignalYes=tokens[1].trim();
+                            break;
+
                     // Default signal settings
-                    else if(tokens[0].equals("CycleLength")){
-                        cBlock.CycleLength=Integer.parseInt(tokens[1].trim());
-                    }else if(tokens[0].equals("LeftTurnGreen")){
-                        cBlock.LeftTurnGreen=Integer.parseInt(tokens[1].trim());
-                    }else if(tokens[0].equals("ThroughGreen")){
-                        cBlock.ThroughGreen=Integer.parseInt(tokens[1].trim());
-                    }else if(tokens[0].equals("RightTurnGreen")){
-                        cBlock.RightTurnGreen=Integer.parseInt(tokens[1].trim());
-                    }else if(tokens[0].equals("LeftTurnSetting")){
-                        cBlock.LeftTurnSetting=tokens[1].trim();
-                    }
+                        case "CycleLength":
+                            cBlock.CycleLength=Integer.parseInt(tokens[1].trim());
+                            break;
+                        case "LeftTurnGreen":
+                            cBlock.LeftTurnGreen=Integer.parseInt(tokens[1].trim());
+                            break;
+                        case "ThroughGreen":
+                            cBlock.ThroughGreen=Integer.parseInt(tokens[1].trim());
+                            break;
+                        case "RightTurnGreen":
+                            cBlock.RightTurnGreen=Integer.parseInt(tokens[1].trim());
+                            break;
+                        case "LeftTurnSetting":
+                            cBlock.LeftTurnSetting=tokens[1].trim();
+                            break;
 
                     // Default parameters
-                    else if(tokens[0].equals("VehicleLength")){
-                        cBlock.VehicleLength=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("FreeFlowSpeedForAdvanceDetector")){
-                        cBlock.FFSpeedForAdvDet=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("OccupancyThresholdForAdvanceDetector")){
-                        cBlock.OccThresholdForAdvDet=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("SaturationHeadway")){
-                        cBlock.SaturationHeadway=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("SaturationSpeedLeft")){
-                        cBlock.SaturationSpeedLeft=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("SaturationSpeedRight")){
-                        cBlock.SaturationSpeedRight=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("SaturationSpeedThrough")){
-                        cBlock.SaturationSpeedThrough=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("StartupLostTime")){
-                        cBlock.StartupLostTime=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("JamSpacing")){
-                        cBlock.JamSpacing=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("DistanceAdvanceDetector")){
-                        cBlock.DistanceAdvanceDetector=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("LeftTurnPocket")){
-                        cBlock.LeftTurnPocket=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("RightTurnPocket")){
-                        cBlock.RightTurnPocket=Double.parseDouble(tokens[1].trim());
-                    }else if(tokens[0].equals("DistanceToEnd")){
-                        cBlock.DistanceToEnd=Double.parseDouble(tokens[1].trim());
-                    }
+                        case "VehicleLength":
+                            cBlock.VehicleLength=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "FreeFlowSpeedForAdvanceDetector":
+                            cBlock.FFSpeedForAdvDet=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "OccupancyThresholdForAdvanceDetector":
+                            cBlock.OccThresholdForAdvDet=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "SaturationHeadway":
+                            cBlock.SaturationHeadway=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "SaturationSpeedLeft":
+                            cBlock.SaturationSpeedLeft=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "SaturationSpeedRight":
+                            cBlock.SaturationSpeedRight=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "SaturationSpeedThrough":
+                            cBlock.SaturationSpeedThrough=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "StartupLostTime":
+                            cBlock.StartupLostTime=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "JamSpacing":
+                            cBlock.JamSpacing=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "DistanceAdvanceDetector":
+                            cBlock.DistanceAdvanceDetector=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "LeftTurnPocket":
+                            cBlock.LeftTurnPocket=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "RightTurnPocket":
+                            cBlock.RightTurnPocket=Double.parseDouble(tokens[1].trim());
+                            break;
+                        case "DistanceToEnd":
+                            cBlock.DistanceToEnd=Double.parseDouble(tokens[1].trim());
+                            break;
 
-                    // Default parameters
-                    else if(tokens[0].equals("LeftTurn")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.LeftTurn=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("LeftTurnQueue")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.LeftTurnQueue=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("RightTurn")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.RightTurn=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("RightTurnQueue")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.RightTurnQueue=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("Advance")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.Advance=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AllMovements")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AllMovements=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvanceLeftTurn")){
-                        String [] tmp=tokens[1].trim().split(",");
+                        // Default parameters
+                        case "LeftTurn":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.LeftTurn=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "LeftTurnQueue":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.LeftTurnQueue=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "RightTurn":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.RightTurn=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "RightTurnQueue":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.RightTurnQueue=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "Advance":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.Advance=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "AllMovements":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.AllMovements=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "AdvanceLeftTurn":
+                            tmp=tokens[1].trim().split(",");
                         cBlock.AdvanceLeftTurn=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
                                 Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvanceRightTurn")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AdvanceRightTurn=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvanceThrough")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AdvanceThrough=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("Through")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.Through=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvanceLeftAndThrough")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AdvanceLeftAndThrough=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("LeftAndThrough")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.LeftAndThrough=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvanceLeftAndRight")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AdvanceLeftAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("LeftAndRight")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.LeftAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("AdvanceThroughAndRight")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.AdvanceThroughAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }else if(tokens[0].equals("ThroughAndRight")){
-                        String [] tmp=tokens[1].trim().split(",");
-                        cBlock.ThroughAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
-                                Double.parseDouble(tmp[2].trim())};
-                    }
+                            break;
+                        case "AdvanceRightTurn":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.AdvanceRightTurn=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "AdvanceThrough":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.AdvanceThrough=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "Through":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.Through=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "AdvanceLeftAndThrough":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.AdvanceLeftAndThrough=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "LeftAndThrough":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.LeftAndThrough=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "AdvanceLeftAndRight":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.AdvanceLeftAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "LeftAndRight":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.LeftAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "AdvanceThroughAndRight":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.AdvanceThroughAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
+                        case "ThroughAndRight":
+                            tmp=tokens[1].trim().split(",");
+                            cBlock.ThroughAndRight=new double []{Double.parseDouble(tmp[0].trim()),Double.parseDouble(tmp[1].trim()),
+                                    Double.parseDouble(tmp[2].trim())};
+                            break;
 
-                    // Aimsun simulation
-                    else if(tokens[0].equals("replicationName")){
-                        cBlock.replicationName=tokens[1].trim();
-                    }else if(tokens[0].equals("sqliteFileLocation")){
-                        cBlock.sqliteFileLocation=tokens[1].trim();
-                    }else if(tokens[0].equals("sqliteFileName")){
-                        cBlock.sqliteFileName=tokens[1].trim();
-                    }else if(tokens[0].equals("vehInfFolder")){
-                        cBlock.vehInfFolder=tokens[1].trim();
-                    }else if(tokens[0].equals("sigInfFolder")){
-                        cBlock.sigInfFolder=tokens[1].trim();
-                    }
+                        // Aimsun simulation
+                        case "replicationName":
+                            cBlock.replicationName=tokens[1].trim();
+                            break;
+                        case "sqliteFileLocation":
+                            cBlock.sqliteFileLocation=tokens[1].trim();
+                            break;
+                        case "sqliteFileName":
+                            cBlock.sqliteFileName=tokens[1].trim();
+                            break;
+                        case "vehInfFolder":
+                            cBlock.vehInfFolder=tokens[1].trim();
+                            break;
+                        case "sigInfFolder":
+                            cBlock.sigInfFolder=tokens[1].trim();
+                            break;
 
-                    else{
-                        System.out.println("Unknown input:"+tokens[0]);
+                        // Bluetooth data
+                        case "bluetoothFolder":
+                            cBlock.bluetoothFolder=tokens[1].trim();
+                        case "bluetoothOutputFolder":
+                            cBlock.bluetoothOutputFolder=tokens[1].trim();
+                        default:
+                            System.out.println("Unknown input:"+tokens[0]);
                     }
                 } // If confLine.length() > 0
             } // while read config file

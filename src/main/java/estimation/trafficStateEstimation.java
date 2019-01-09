@@ -33,7 +33,11 @@ public class trafficStateEstimation {
         List<TrafficState> trafficStateList=new ArrayList<TrafficState>();
         for(int i=0;i<aimsunApproaches.size();i++) {// Loop for each approach
 
-            System.out.println("Junction ID="+aimsunApproaches.get(i).getJunctionID()+", Name="+
+            //if(!(aimsunApproaches.get(i).getJunctionID()==3329 ||aimsunApproaches.get(i).getJunctionID()==3344 ||aimsunApproaches.get(i).getJunctionID()==3370
+            //        ||aimsunApproaches.get(i).getJunctionID()==3341 || aimsunApproaches.get(i).getJunctionID()==3369))
+            //    continue;
+
+            System.out.println("i="+i+" With Junction ID="+aimsunApproaches.get(i).getJunctionID()+", Name="+
                     aimsunApproaches.get(i).getJunctionName()+", Section ID="+aimsunApproaches.get(i).getFirstSectionID());
 
             AimsunApproach aimsunApproach=aimsunApproaches.get(i);

@@ -38,7 +38,7 @@ public class trafficInitialization {
                         aimsunNetworkByApproach.get(i).getJunctionName()+ ", First Section ID="+aimsunNetworkByApproach.get(i).getFirstSectionID());
                 if(aimsunNetworkByApproach.get(i).getSignalized()==1){ // if it is a signalized junction
                     int FirstSectionID=aimsunNetworkByApproach.get(i).getFirstSectionID(); // Get the first section in the downstream
-                    //if(FirstSectionID!=22211) continue;;
+                    //if(FirstSectionID!=21931) continue;;
                     if(estimationResultsList.containsKey(FirstSectionID)){
                         // If we have estimated queues(non-negative values: -1 means no information; -2 means no such a movement)
                         List<SimVehicle> tmpListSimVehicle=generateVehiclesWithEstimation.ForSignalizedJunction(aimsunNetworkByApproach.get(i),
